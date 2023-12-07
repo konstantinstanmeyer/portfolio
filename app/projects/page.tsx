@@ -29,7 +29,7 @@ export default function ProjectsPage() {
                 className="group relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-8 rounded-2xl bg-[rgba(255,255,255,0.02)] border border-[rgba(138,138,133,0.1)] hover:border-[rgba(201,162,39,0.3)] transition-all duration-300"
                 whileHover={{ y: -4 }}
               >
-                <div className={`relative aspect-video lg:aspect-[4/3] rounded-lg overflow-hidden ${
+                <div className={`relative aspect-video lg:aspect-[16.5/9] rounded-lg overflow-hidden ${
                   index % 2 === 1 ? 'lg:order-2' : ''
                 }`}>
                   <Image
@@ -58,7 +58,7 @@ export default function ProjectsPage() {
                   <p className="font-accent text-lg italic text-secondary mb-4">
                     {project.subtitle}
                   </p>
-                  <p className="text-secondary leading-relaxed mb-6 line-clamp-3">
+                  <p className="text-secondary leading-relaxed mb-6">
                     {project.description}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-6">

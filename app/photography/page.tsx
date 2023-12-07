@@ -52,22 +52,22 @@ export default function PhotographyPage() {
         <div className="max-w-[1100px] mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <FadeIn>
-              <h2 className="font-display text-4xl font-normal text-[--color-text-primary] mb-6">
+              <h2 className="font-display text-4xl font-normal text-primary mb-6">
                 On Seeing
               </h2>
-              <blockquote className="font-accent text-2xl italic text-[--color-text-primary] leading-relaxed mb-3">
+              <blockquote className="font-accent text-2xl italic text-primary leading-relaxed mb-3">
                 "Photography is a way of feeling, of touching, of loving. What you have caught on film is captured forever..."
               </blockquote>
-              <cite className="text-[--color-accent] text-sm not-italic block mb-6">
+              <cite className="text-accent text-sm not-italic block mb-6">
                 — Aaron Siskind
               </cite>
-              <p className="text-[--color-text-secondary] leading-relaxed mb-4">
+              <p className="text-secondary leading-relaxed mb-4">
                 For me, photography has never been about the gear or the technical perfection. It's about 
                 that split second when light, emotion, and composition align into something that resonates. 
                 The same principles guide my approach to design: every interface is a composition, every 
                 interaction a moment to be captured.
               </p>
-              <p className="text-[--color-text-secondary] leading-relaxed">
+              <p className="text-secondary leading-relaxed">
                 I learned patience behind the viewfinder—waiting for the right moment rather than forcing it. 
                 That patience translates directly to how I approach problem-solving in development: taking time 
                 to understand the challenge before rushing to code.
@@ -76,7 +76,7 @@ export default function PhotographyPage() {
 
             <FadeIn delay={0.2}>
               <div className="relative rounded-lg overflow-hidden">
-                <div className="absolute -inset-4 border border-[--color-accent] opacity-20 rounded-xl -z-10" />
+                <div className="absolute -inset-4 border border-accent opacity-20 rounded-xl -z-10" />
                 <Image
                   src="/photos/essay-image.jpg"
                   alt="Behind the scenes"
@@ -93,10 +93,10 @@ export default function PhotographyPage() {
       <section className="max-w-[1100px] mx-auto px-6 py-16">
         <FadeIn>
           <div className="text-center mb-10">
-            <h2 className="font-display text-3xl font-normal text-[--color-text-primary] mb-2">
+            <h2 className="font-display text-3xl font-normal text-primary mb-2">
               Gear
             </h2>
-            <p className="font-accent text-lg italic text-[--color-text-secondary]">
+            <p className="font-accent text-lg italic text-secondary">
               The tools I use to capture these moments
             </p>
           </div>
@@ -107,12 +107,12 @@ export default function PhotographyPage() {
             {GEAR.map((item) => (
               <div
                 key={item.name}
-                className="text-center p-6 bg-[rgba(255,255,255,0.02)] rounded-lg border border-[rgba(138,138,133,0.1)] hover:border-[--color-accent] hover:-translate-y-1 transition-all duration-200"
+                className="text-center p-6 bg-[rgba(255,255,255,0.02)] rounded-lg border border-[rgba(138,138,133,0.1)] hover:border-accent hover:-translate-y-1 transition-all duration-200"
               >
-                <span className="text-xs tracking-wider uppercase text-[--color-text-secondary] block mb-2">
+                <span className="text-xs tracking-wider uppercase text-secondary block mb-2">
                   {item.category}
                 </span>
-                <span className="font-display text-lg text-[--color-text-primary]">
+                <span className="font-display text-lg text-primary">
                   {item.name}
                 </span>
               </div>
