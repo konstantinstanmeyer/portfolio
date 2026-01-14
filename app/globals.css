@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0f0f0f;
+  --color-bg-dark: #0a0a0a;
+  --color-text-primary: #f5f5f0;
+  --color-text-secondary: #8a8a85;
+  --color-accent: #c9a227;
+  --color-accent-muted: rgba(201, 162, 39, 0.15);
+  
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-accent: 'Cormorant Garamond', Georgia, serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: #0f0f0f;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-text-secondary);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-accent {
+    font-family: var(--font-accent);
+  }
+
+  .text-primary {
+    color: var(--color-text-primary);
+  }
+
+  .text-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  .text-accent {
+    color: var(--color-accent);
+  }
+
+  .bg-accent {
+    background-color: var(--color-accent);
+  }
+
+  .bg-accent-muted {
+    background-color: var(--color-accent-muted);
+  }
+
+  .border-accent {
+    border-color: var(--color-accent);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-3 border border-accent rounded text-sm font-medium tracking-wide transition-all duration-200;
+  }
+
+  .btn-primary:hover {
+    @apply bg-accent text-[#0f0f0f];
+  }
+
+  .section-label {
+    @apply flex items-center gap-3 mb-3;
+  }
+
+  .section-label-line {
+    @apply w-10 h-px bg-accent;
+  }
+
+  .section-label-text {
+    @apply text-xs font-medium tracking-[0.2em] uppercase text-accent;
+  }
+}
+
+@layer utilities {
+  .transition-smooth {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-fast {
+    transition: all 0.2s ease;
+  }
+}
+
+/* Loader Animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loader-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Masonry Grid Styles */
+.masonry-grid {
+  display: flex;
+  margin-left: -16px;
+  width: auto;
+}
+
+.masonry-grid-column {
+  padding-left: 16px;
+  background-clip: padding-box;
+}
+
+.masonry-grid-column > div {
+  margin-bottom: 16px;
+}
+
+
+@keyframes progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.animate-progress {
+  animation: progress linear forwards;
+}
