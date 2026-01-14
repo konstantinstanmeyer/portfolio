@@ -149,3 +149,10 @@
 .animate-progress {
   animation: progress linear forwards;
 }
+
+.flicker-on {
+  color: #c9a227;
+  text-shadow:
+    0 0 4px rgba(201, 162, 39, 1),
+    /* 0 0 10px rgba(201, 162, 39, 1); */
+}
