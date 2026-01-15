@@ -24,7 +24,7 @@ export default function Home() {
       <section className="max-w-275 mx-auto px-6 pt-40 pb-24 min-h-screen flex items-center">
         <div className="flex flex-col lg:flex-row justify-between items-center gap-12 w-full">
           <FadeIn className="max-w-125 lg:text-left text-center">
-            <h1 className="font-display text-4xl md:text-5xl font-medium leading-tight tracking-tight text-[--color-text-primary] mb-6">
+            <h1 className="font-display text-4xl md:text-5xl font-medium leading-tight tracking-tight text-primary mb-6">
               Konstantin builds full-stack solutions that just work.
             </h1>
             <div className="w-15 h-px bg-accent mb-6 lg:mx-0 mx-auto" />
@@ -37,7 +37,7 @@ export default function Home() {
 
           <FadeIn delay={0.2} className="relative">
             <div className="relative w-[300px] h-[400px] lg:w-[380px] lg:h-[500px] overflow-hidden">
-              <div className="absolute inset-0 border border-[--color-accent] opacity-30 translate-x-4 translate-y-4 -z-10" />
+              <div className="absolute inset-0 border border-accent opacity-30 translate-x-4 translate-y-4 -z-10" />
               <Image
                 src="/portrait.jpeg"
                 alt="Konstantin Stanmeyer"
@@ -52,10 +52,10 @@ export default function Home() {
       <section id="skills" className="max-w-[1100px] mx-auto px-6 py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           <FadeIn>
-            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-text-primary mb-4">
+            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-primary mb-4">
               I've built solutions with technologies you may recognize.
             </h2>
-            <p className="text-text-secondary leading-relaxed">
+            <p className="text-secondary leading-relaxed">
               People, performance, and problem-solving. In that order. I focus on writing clean, 
               efficient code while leveraging modern frameworks and tools to build seamless digital experiences.
             </p>
@@ -70,20 +70,20 @@ export default function Home() {
           </FadeIn>
 
           <FadeIn delay={0.2}>
-            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-text-primary mb-4">
+            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-primary mb-4">
               Great products start with people.
             </h2>
-            <p className="text-text-secondary leading-relaxed">
+            <p className="text-secondary leading-relaxed">
               Understanding user motivations, frustrations, and behaviors guides every decision I make. 
               I believe in building solutions that create genuine value—not just features.
             </p>
           </FadeIn>
 
           <FadeIn delay={0.3}>
-            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-text-primary mb-4">
+            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-primary mb-4">
               Maintained Creative + Technical Focus.
             </h2>
-            <p className="text-text-secondary leading-relaxed">
+            <p className="text-secondary leading-relaxed">
               Working behind a camera trained me to pay attention to spacing, contrast, and detail. 
               Those habits still guide the way I structure layouts and evaluate interface clarity.
             </p>
@@ -96,7 +96,7 @@ export default function Home() {
             <span className="section-label-line" />
             <span className="section-label-text">Selected Work</span>
           </div>
-          <h2 className="font-display text-3xl md:text-4xl font-normal text-[--color-text-primary] mb-12">
+          <h2 className="font-display text-3xl md:text-4xl font-normal text-primary mb-12">
             Featured Projects
           </h2>
         </FadeIn>
@@ -116,16 +116,16 @@ export default function Home() {
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,15,15,0.9)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                    <span className="text-sm font-medium tracking-wide text-text-primary px-4 py-2 border border-accent rounded transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                    <span className="text-sm font-medium tracking-wide text-primary px-4 py-2 border border-accent rounded transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                       View Project
                     </span>
                   </div>
                 </div>
                 <div className="p-4 bg-[rgba(15,15,15,0.5)]">
-                  <h3 className="font-display text-xl font-normal text-text-primary mb-1">
+                  <h3 className="font-display text-xl font-normal text-primary mb-1">
                     {project.title}
                   </h3>
-                  <p className="text-sm text-text-secondary">{project.type}</p>
+                  <p className="text-sm text-secondary">{project.type}</p>
                 </div>
               </Link>
               
@@ -133,7 +133,7 @@ export default function Home() {
           ))}
         </StaggerContainer>
         <div className="flex justify-center">
-          <Link href="/projects" className="btn-primary group">
+          <Link href="/projects" className="btn-primary group text-primary hover:text-black">
             <span>View All Projects</span>
             <svg 
               viewBox="0 0 24 24" 
@@ -155,10 +155,10 @@ export default function Home() {
           <span className="section-label-line" />
           <span className="section-label-text">Beyond Code</span>
         </div>
-        <h2 className="font-display text-3xl md:text-4xl font-normal text-[--color-text-primary] mb-6">
+        <h2 className="font-display text-3xl md:text-4xl font-normal text-primary mb-6">
           Through the Lens
         </h2>
-        <p className="text-text-secondary leading-relaxed mb-6">
+        <p className="text-secondary leading-relaxed mb-6">
           Before I wrote my first line of code, I was composing frames. Photography taught me 
           that every pixel matters—that the space between elements tells a story just as 
           much as the elements themselves. This perspective shapes how I approach design: 

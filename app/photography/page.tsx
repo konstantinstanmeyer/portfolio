@@ -21,12 +21,12 @@ export default function PhotographyPage() {
             </div>
           </FadeIn>
           <FadeIn delay={0.1}>
-            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-normal text-[--color-text-primary] leading-none mb-6">
+            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-normal text-primary leading-none mb-6">
               Through<br/>the Lens
             </h1>
           </FadeIn>
           <FadeIn delay={0.2}>
-            <p className="text-[--color-text-secondary] leading-relaxed max-w-[400px]">
+            <p className="text-secondary leading-relaxed max-w-[400px]">
               Capturing moments that speak. Photography has always been my first creative language—a 
               way of seeing the world that influences everything I design and build.
             </p>

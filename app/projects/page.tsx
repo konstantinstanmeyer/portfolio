@@ -14,7 +14,7 @@ export default function ProjectsPage() {
           <FadeIn>
             <div className="section-label justify-center">
               <span className="section-label-line" />
-              <span className="section-label-text">PROJECTS</span>
+              <span className="section-label-text">PORTFOLIO</span>
             </div>
           </FadeIn>
 
@@ -42,30 +42,30 @@ export default function ProjectsPage() {
                 </div>
                 <div className={`flex flex-col justify-center ${index % 2 === 1 ? 'lg:order-1' : ''}`}>
                   <div className="flex items-center gap-4 mb-3">
-                    <span className="text-[--color-accent] text-sm font-semibold tracking-wider">
+                    <span className="text-accent text-sm font-semibold tracking-wider">
                       {String(index + 1).padStart(2, '0')}
                     </span>
-                    <span className="text-xs tracking-wider uppercase text-[--color-text-secondary]">
+                    <span className="text-xs tracking-wider uppercase text-secondary">
                       {project.type}
                     </span>
-                    <span className="text-xs tracking-wider text-[--color-text-secondary]">
+                    <span className="text-xs tracking-wider text-secondary">
                       {project.year}
                     </span>
                   </div>
-                  <h2 className="font-display text-3xl md:text-4xl font-normal text-[--color-text-primary] mb-1">
+                  <h2 className="font-display text-3xl md:text-4xl font-normal text-primary mb-1">
                     {project.title}
                   </h2>
-                  <p className="font-accent text-lg italic text-[--color-text-secondary] mb-4">
+                  <p className="font-accent text-lg italic text-secondary mb-4">
                     {project.subtitle}
                   </p>
-                  <p className="text-[--color-text-secondary] leading-relaxed mb-6 line-clamp-3">
+                  <p className="text-secondary leading-relaxed mb-6 line-clamp-3">
                     {project.description}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-6">
                     {project.technologies.map((tech) => (
                       <span
                         key={tech}
-                        className="text-xs text-[--color-text-secondary] bg-[rgba(138,138,133,0.1)] px-3 py-1 rounded-full"
+                        className="text-xs text-secondary bg-[rgba(138,138,133,0.1)] px-3 py-1 rounded-full"
                       >
                         {tech}
                       </span>
@@ -77,7 +77,7 @@ export default function ProjectsPage() {
                         href={project.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm font-medium tracking-wide text-[--color-text-primary] px-4 py-2 border border-[--color-text-secondary] rounded hover:border-[--color-accent] hover:text-[--color-accent] transition-all duration-200"
+                        className="inline-flex items-center gap-2 text-sm font-medium tracking-wide text-primary px-4 py-2 border border-secondary rounded hover:border-accent hover:text-accent transition-all duration-200"
                       >
                         <span>View Live</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
@@ -90,7 +90,7 @@ export default function ProjectsPage() {
                         href={project.githubUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm font-medium tracking-wide text-[--color-text-secondary] hover:text-[--color-accent] transition-colors duration-200"
+                        className="inline-flex items-center gap-2 text-sm font-medium tracking-wide text-secondary hover:text-accent transition-colors duration-200"
                       >
                         <span>Source</span>
                         <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">

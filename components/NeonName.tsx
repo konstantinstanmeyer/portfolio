@@ -57,11 +57,11 @@ export function NeonName() {
             <div className="flex flex-col gap-0.5" ref={groupRef}>
                 <FlickerText
                 text="KONSTANTIN"
-                className="text-xs font-bold tracking-[2px] text-[--color-text-primary]"
+                className="text-xs font-bold tracking-[2px] text-primary"
                 />
                 <FlickerText
                 text="STANMEYER"
-                className="text-xs font-bold tracking-[2px] text-[--color-text-primary]"
+                className="text-xs font-bold tracking-[2px] text-primary"
                 />
             </div>
         </Link>

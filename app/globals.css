@@ -3,8 +3,8 @@
 @theme {
   --color-bg: #0f0f0f;
   --color-bg-dark: #0a0a0a;
-  --color-text-primary: #f5f5f0;
-  --color-text-secondary: #8a8a85;
+  --color-primary: #f5f5f0;
+  --color-secondary: #8a8a85;
   --color-accent: #c9a227;
   --color-accent-muted: rgba(201, 162, 39, 0.15);
   
@@ -87,7 +87,7 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-6 py-3 border border-accent rounded text-sm font-medium tracking-wide transition-all duration-200;
+    @apply inline-flex items-center gap-2 px-6 py-3 border border-accent text-primary rounded text-sm font-medium tracking-wide transition-all duration-200;
   }
 
   .btn-primary:hover {

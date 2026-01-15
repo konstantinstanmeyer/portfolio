@@ -10,15 +10,15 @@ export function Footer() {
   return (
     <footer id="contact" className="max-w-[1100px] mx-auto px-6 py-24 text-center">
       <div className="mb-16">
-        <h2 className="font-display text-4xl md:text-5xl font-normal text-[--color-text-primary] mb-4">
+        <h2 className="font-display text-4xl md:text-5xl font-normal text-primary mb-4">
           Let's work together
         </h2>
-        <p className="font-accent text-xl italic text-[--color-text-secondary] mb-8">
+        <p className="font-accent text-xl italic text-secondary mb-8">
           Have a project in mind? I'd love to hear about it.
         </p>
         <a
           href="mailto:konstantin@stanmeyer.com"
-          className="btn-primary"
+          className="btn-primary text-primary hover:text-black"
         >
           Get in touch
         </a>
@@ -30,13 +30,13 @@ export function Footer() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-[--color-text-secondary] hover:text-[--color-accent] transition-colors"
+              className="text-sm text-secondary hover:text-accent transition-colors"
             >
               {link.label}
             </Link>
           ))}
         </div>
-        <span className="text-sm text-[--color-text-secondary]">
+        <span className="text-sm text-secondary">
           © 2026 Konstantin Stanmeyer
         </span>
       </div>
