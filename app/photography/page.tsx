@@ -22,17 +22,16 @@ export default function PhotographyPage() {
           </FadeIn>
           <FadeIn delay={0.1}>
             <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-normal text-primary leading-none mb-6">
-              Through<br/>the Lens
+              Logic Through<br/>a new Lens
             </h1>
           </FadeIn>
           <FadeIn delay={0.2}>
             <p className="text-secondary leading-relaxed max-w-[400px]">
-              Capturing moments that speak. Photography has always been my first creative language—a 
+              To capture moments that speak—since the age of three, photography has always been my first creative language. It's a 
               way of seeing the world that influences everything I design and build.
             </p>
           </FadeIn>
         </div>
-
         <div className="relative h-[50vh] lg:h-auto overflow-hidden">
           <Image
             src="/photos/photo-21.jpg"
@@ -48,7 +47,7 @@ export default function PhotographyPage() {
 
       <PhotoGallery />
 
-      <section className="py-24 bg-gradient-to-b from-transparent via-[rgba(201,162,39,0.02)] to-transparent">
+      <section className="py-24 bg-linear-to-b from-transparent via-[rgba(201,162,39,0.02)] to-transparent">
         <div className="max-w-[1100px] mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <FadeIn>
@@ -56,16 +55,14 @@ export default function PhotographyPage() {
                 On Seeing
               </h2>
               <blockquote className="font-accent text-2xl italic text-primary leading-relaxed mb-3">
-                "Photography is a way of feeling, of touching, of loving. What you have caught on film is captured forever..."
+                "If your pictures aren't good enough, you aren't close enough"
               </blockquote>
               <cite className="text-accent text-sm not-italic block mb-6">
-                — Aaron Siskind
+                — Robert Capa
               </cite>
               <p className="text-secondary leading-relaxed mb-4">
-                For me, photography has never been about the gear or the technical perfection. It's about 
-                that split second when light, emotion, and composition align into something that resonates. 
-                The same principles guide my approach to design: every interface is a composition, every 
-                interaction a moment to be captured.
+                For me, the least important aspect of photography is the equipement. The way moments line up,
+                when the actors and light come together just right, that's where all the beauty lies.
               </p>
               <p className="text-secondary leading-relaxed">
                 I learned patience behind the viewfinder—waiting for the right moment rather than forcing it. 
@@ -78,11 +75,11 @@ export default function PhotographyPage() {
               <div className="relative rounded-lg overflow-hidden">
                 <div className="absolute -inset-4 border border-accent opacity-20 rounded-xl -z-10" />
                 <Image
-                  src="/photos/essay-image.jpg"
+                  src="/behind-the-scenes.jpeg"
                   alt="Behind the scenes"
                   width={600}
                   height={400}
-                  className="w-full h-auto grayscale-[20%] hover:grayscale-0 transition-all duration-500"
+                  className="w-full h-auto grayscale-20 hover:grayscale-0 transition-all duration-500"
                 />
               </div>
             </FadeIn>
@@ -96,9 +93,6 @@ export default function PhotographyPage() {
             <h2 className="font-display text-3xl font-normal text-primary mb-2">
               Gear
             </h2>
-            <p className="font-accent text-lg italic text-secondary">
-              The tools I use to capture these moments
-            </p>
           </div>
         </FadeIn>
 
