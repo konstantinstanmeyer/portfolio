@@ -7,12 +7,12 @@ import { featuredProjects } from '@/lib/projects'
 import { PhotoCarousel } from '@/components/PhotoCarousel'
 
 const skills = [
-  { name: 'React', icon: '/react.png' },
   { name: 'JavaScript', icon: '/javascript.png' },
   { name: 'TypeScript', icon: '/typescript.png' },
+  { name: 'Java', icon: '/java.png' },
   { name: 'Node.js', icon: '/nodejs.png' },
   { name: 'Next.js', icon: '/nextjs.png' },
-  { name: 'Redux', icon: '/redux.png' },
+  { name: 'React', icon: '/react.png' },
   { name: 'PostgreSQL', icon: '/postgresql.png' },
   { name: 'Rails', icon: '/rails.png' },
   { name: 'AWS', icon: '/aws.png' },
