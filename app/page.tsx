@@ -24,13 +24,13 @@ export default function Home() {
       <section className="max-w-275 mx-auto px-6 pt-40 pb-24 min-h-screen flex items-center">
         <div className="flex flex-col lg:flex-row justify-between items-center gap-12 w-full">
           <FadeIn className="max-w-125 lg:text-left text-center">
-            <h1 className="font-display text-4xl md:text-5xl font-normal leading-tight tracking-tight text-[--color-text-primary] mb-6">
+            <h1 className="font-display text-4xl md:text-5xl font-medium leading-tight tracking-tight text-[--color-text-primary] mb-6">
               Konstantin builds full-stack solutions that just work.
             </h1>
-            <div className="w-15 h-px bg-[--color-accent] mb-6 lg:mx-0 mx-auto" />
-            <p className="font-accent text-xl italic text-[--color-text-secondary] leading-relaxed mb-6">
+            <div className="w-15 h-px bg-accent mb-6 lg:mx-0 mx-auto" />
+            <p className="font-accent text-xl italic font-medium text-secondary leading-relaxed mb-6 tracking-tight">
               I design applications and sites for businesses and personal interests as a{' '}
-              <span className="text-[--color-accent] not-italic font-medium">freelance developer</span>
+              <span className="text-accent font-bold">freelance developer</span>
             </p>
             <SocialLinks className="lg:justify-start justify-center" />
           </FadeIn>
@@ -52,17 +52,17 @@ export default function Home() {
       <section id="skills" className="max-w-[1100px] mx-auto px-6 py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           <FadeIn>
-            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-[--color-text-primary] mb-4">
+            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-text-primary mb-4">
               I've built solutions with technologies you may recognize.
             </h2>
-            <p className="text-[--color-text-secondary] leading-relaxed">
+            <p className="text-text-secondary leading-relaxed">
               People, performance, and problem-solving. In that order. I focus on writing clean, 
               efficient code while leveraging modern frameworks and tools to build seamless digital experiences.
             </p>
           </FadeIn>
 
           <FadeIn delay={0.1}>
-            <div className="grid grid-cols-3 gap-6 p-6">
+            <div className="grid grid-cols-3 gap-6 px-6">
               {skills.map((skill) => (
                 <SkillIcon key={skill.name} name={skill.name} icon={skill.icon} />
               ))}
@@ -70,20 +70,20 @@ export default function Home() {
           </FadeIn>
 
           <FadeIn delay={0.2}>
-            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-[--color-text-primary] mb-4">
+            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-text-primary mb-4">
               Great products start with people.
             </h2>
-            <p className="text-[--color-text-secondary] leading-relaxed">
+            <p className="text-text-secondary leading-relaxed">
               Understanding user motivations, frustrations, and behaviors guides every decision I make. 
               I believe in building solutions that create genuine value—not just features.
             </p>
           </FadeIn>
 
           <FadeIn delay={0.3}>
-            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-[--color-text-primary] mb-4">
+            <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-text-primary mb-4">
               Maintained Creative + Technical Focus.
             </h2>
-            <p className="text-[--color-text-secondary] leading-relaxed">
+            <p className="text-text-secondary leading-relaxed">
               Working behind a camera trained me to pay attention to spacing, contrast, and detail. 
               Those habits still guide the way I structure layouts and evaluate interface clarity.
             </p>
@@ -116,16 +116,16 @@ export default function Home() {
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,15,15,0.9)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                    <span className="text-sm font-medium tracking-wide text-[--color-text-primary] px-4 py-2 border border-[--color-accent] rounded transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                    <span className="text-sm font-medium tracking-wide text-text-primary px-4 py-2 border border-accent rounded transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                       View Project
                     </span>
                   </div>
                 </div>
                 <div className="p-4 bg-[rgba(15,15,15,0.5)]">
-                  <h3 className="font-display text-xl font-normal text-[--color-text-primary] mb-1">
+                  <h3 className="font-display text-xl font-normal text-text-primary mb-1">
                     {project.title}
                   </h3>
-                  <p className="text-sm text-[--color-text-secondary]">{project.type}</p>
+                  <p className="text-sm text-text-secondary">{project.type}</p>
                 </div>
               </Link>
               
@@ -158,7 +158,7 @@ export default function Home() {
         <h2 className="font-display text-3xl md:text-4xl font-normal text-[--color-text-primary] mb-6">
           Through the Lens
         </h2>
-        <p className="text-[--color-text-secondary] leading-relaxed mb-6">
+        <p className="text-text-secondary leading-relaxed mb-6">
           Before I wrote my first line of code, I was composing frames. Photography taught me 
           that every pixel matters—that the space between elements tells a story just as 
           much as the elements themselves. This perspective shapes how I approach design: 
@@ -167,7 +167,7 @@ export default function Home() {
         </p>
         <Link 
           href="/photography" 
-          className="inline-flex items-center gap-2 text-[--color-accent] font-medium hover:gap-4 transition-all duration-200"
+          className="inline-flex items-center gap-2 text-accent font-medium hover:gap-4 transition-all duration-200"
         >
           <span>Explore Gallery</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">

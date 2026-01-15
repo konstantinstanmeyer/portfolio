@@ -13,7 +13,7 @@ export function SkillIcon({ name, icon }: SkillIconProps) {
 
   return (
     <div
-      className="relative w-14 h-14 flex items-center justify-center border border-[rgba(138,138,133,0.2)] rounded-xl cursor-default transition-all duration-200 hover:border-[--color-accent] hover:-translate-y-1"
+      className="relative w-14 h-14 flex items-center justify-center border border-[rgba(138,138,133,0.2)] rounded-xl cursor-default transition-all duration-200 hover:border-accent hover:-translate-y-1 mx-auto"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

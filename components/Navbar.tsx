@@ -26,7 +26,7 @@ export function Navbar() {
             <Link
                 key={link.href}
                 href={link.href}
-                className={`relative inline-block text-sm font-medium tracking-wide
+                className={`relative inline-block text-[13px] font-semibold tracking-[1px]
                   ${isActive ? 'text-primary' : 'text-secondary'}
                   hover:text-primary
 

@@ -14,20 +14,10 @@ export default function ProjectsPage() {
           <FadeIn>
             <div className="section-label justify-center">
               <span className="section-label-line" />
-              <span className="section-label-text">Portfolio</span>
+              <span className="section-label-text">PROJECTS</span>
             </div>
           </FadeIn>
-          <FadeIn delay={0.1}>
-            <h1 className="font-display text-5xl md:text-6xl font-normal text-[--color-text-primary] mb-4">
-              Selected Works
-            </h1>
-          </FadeIn>
-          <FadeIn delay={0.2}>
-            <p className="font-accent text-xl italic text-[--color-text-secondary] leading-relaxed">
-              a collection of full-stack development, 
-              creative design, and seamless user experiences.
-            </p>
-          </FadeIn>
+
         </div>
       </section>
       <section className="max-w-[1200px] mx-auto px-6 pb-24">
