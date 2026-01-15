@@ -45,7 +45,7 @@ export const projects: Project[] = [
         technologies: ['Next.js', 'MongoDB', 'Mongoose ODM', 'TypeScript'],
         timeline: '7 weeks',
         role: 'Full-Stack Development',
-        liveUrl: 'https://sm-2-next-14.vercel.app/',
+        liveUrl: 'https://sm2-next-14.vercel.app/',
         image: '/projects/sm-2.png',
         images: ['/projects/sm-2-1.jpg', '/projects/sm-2-2.jpg', '/projects/sm-2-3.jpg'],
     },
