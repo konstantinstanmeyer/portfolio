@@ -85,7 +85,7 @@ export const projects: Project[] = [
         type: 'Personal',
         year: '2026',
         description: "A personal portfolio site with a focus on technical projects. Includes a photography section for exploration on Konstantin's previous travel and work.",
-        technologies: ['Next.js'],
+        technologies: ['Next.js', 'Framer Motion'],
         timeline: '2 weeks',
         role: 'Development',
         liveUrl: 'https://www.konstantinstanmeyer.com/',
@@ -103,6 +103,19 @@ export const projects: Project[] = [
         role: 'Development',
         githubUrl: 'https://github.com/konstantinstanmeyer/phase-1-anew',
         image: '/projects/lukon.png',
+    },
+    {
+        id: 'no-more-youth',
+        title: 'No More Youth',
+        subtitle: 'WORK IN PROGRESS',
+        type: 'Client',
+        year: '2026',
+        description: "An in-progress, contracted application for Boston-based metal band No More Youth. Following their recent album release, their increased popularity and desire to gain reach moves their focus toward a dedicated digital platform that centralizes their music, tour information, merchandise, and fan engagement. ETA end of January",
+        technologies: ['Next.js', 'Bandsintown API'],
+        timeline: '1 week',
+        role: 'Development',
+        githubUrl: 'https://github.com/konstantinstanmeyer/no-more-youth/tree/main/app',
+        image: '/projects/no-more-youth.gif',
     }
 ]
 
