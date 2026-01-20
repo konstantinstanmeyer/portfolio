@@ -84,12 +84,25 @@ export const projects: Project[] = [
         subtitle: 'Personal Portfolio Website',
         type: 'Personal',
         year: '2026',
-        description: 'A weather visualization dashboard with location-based forecasting, featuring beautiful data visualizations and responsive design.',
+        description: "A personal portfolio site with a focus on technical projects. Includes a photography section for exploration on Konstantin's previous travel and work.",
         technologies: ['Next.js'],
         timeline: '2 weeks',
         role: 'Development',
         liveUrl: 'https://www.konstantinstanmeyer.com/',
         image: '/projects/portfolio.png',
+    },
+    {
+        id: 'lukon',
+        title: 'Lukon',
+        subtitle: 'Cocktail Recipe Site',
+        type: 'Application',
+        year: '2026',
+        description: "A simplistic project originally built in HTML/JavaScript/CSS, but now reworked to serve information from a Java/Spring Boot backend to a Vite/React.js frontend. Utilizes TheCocktailDB, an open-source database, to seed information on the backend.",
+        technologies: ['Java', 'Spring Boot', 'Vite', 'React.js'],
+        timeline: '1 day',
+        role: 'Development',
+        githubUrl: 'https://github.com/konstantinstanmeyer/phase-1-anew',
+        image: '/projects/lukon.png',
     }
 ]
 
