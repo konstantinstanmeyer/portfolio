@@ -36,10 +36,10 @@ export const projects: Project[] = [
     {
         id: 'no-more-youth',
         title: 'No More Youth',
-        subtitle: 'WORK IN PROGRESS',
+        subtitle: 'Boston-based metallic hardcore band',
         type: 'Client',
         year: '2026',
-        description: "An in-progress, contracted application for Boston-based metal band No More Youth. Following their recent album release, increased popularity, and a desire to gain more reach, this acts as a dedicated digital platform that centralizes their music, tour information, merchandise, and fan engagement. ETA end of January",
+        description: "Following their recent album release, increased popularity, and a desire to gain more reach, this acts as a dedicated digital platform that centralizes their music, tour information, merchandise, and fan engagement. ETA end of January",
         technologies: ['React', 'Next.js', 'Bandsintown API'],
         timeline: '1 week',
         role: 'Development',
