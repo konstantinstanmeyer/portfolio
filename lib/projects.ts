@@ -34,6 +34,20 @@ export const projects: Project[] = [
         images: ['/projects/gerald-1.png', '/projects/gerald-2.jpg', '/projects/gerald-3.jpg'],
     },
     {
+        id: 'no-more-youth',
+        title: 'No More Youth',
+        subtitle: 'WORK IN PROGRESS',
+        type: 'Client',
+        year: '2026',
+        description: "An in-progress, contracted application for Boston-based metal band No More Youth. Following their recent album release, increased popularity, and a desire to gain more reach, their focus toward a dedicated digital platform that centralizes their music, tour information, merchandise, and fan engagement. ETA end of January",
+        technologies: ['Next.js', 'Bandsintown API'],
+        timeline: '1 week',
+        role: 'Development',
+        liveUrl: 'https://www.nomoreyouth.com/',
+        githubUrl: 'https://github.com/konstantinstanmeyer/no-more-youth/tree/main/app',
+        image: '/projects/no-more-youth.gif',
+    },
+    {
         id: 'sm-2',
         title: 'SM-2',
         subtitle: 'Spaced Repetition Language Learning',
@@ -104,19 +118,6 @@ export const projects: Project[] = [
         githubUrl: 'https://github.com/konstantinstanmeyer/phase-1-anew',
         image: '/projects/lukon.png',
     },
-    {
-        id: 'no-more-youth',
-        title: 'No More Youth',
-        subtitle: 'WORK IN PROGRESS',
-        type: 'Client',
-        year: '2026',
-        description: "An in-progress, contracted application for Boston-based metal band No More Youth. Following their recent album release, their increased popularity and desire to gain reach moves their focus toward a dedicated digital platform that centralizes their music, tour information, merchandise, and fan engagement. ETA end of January",
-        technologies: ['Next.js', 'Bandsintown API'],
-        timeline: '1 week',
-        role: 'Development',
-        githubUrl: 'https://github.com/konstantinstanmeyer/no-more-youth/tree/main/app',
-        image: '/projects/no-more-youth.gif',
-    }
 ]
 
 export const featuredProjects = projects.slice(0, 3)
