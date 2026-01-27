@@ -61,7 +61,7 @@ export default function PhotographyPage() {
                 — Robert Capa
               </cite>
               <p className="text-secondary leading-relaxed mb-4">
-                For me, the least important aspect of photography is the equipement. The way moments line up,
+                For me, the least important aspect of photography is the equipment. The way moments line up,
                 when the actors and light come together just right, that's where all the beauty lies.
               </p>
               <p className="text-secondary leading-relaxed">

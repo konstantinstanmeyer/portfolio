@@ -25,7 +25,7 @@ export default function Home() {
         <div className="flex flex-col lg:flex-row justify-between items-center gap-12 w-full">
           <FadeIn className="max-w-125 lg:text-left text-center">
             <h1 className="font-display text-4xl md:text-5xl font-medium leading-tight tracking-tight text-primary mb-6">
-              Konstantin builds full-stack solutions that just work.
+              Konstantin builds web-based solutions that just work.
             </h1>
             <div className="w-15 h-px bg-accent mb-6 lg:mx-0 mx-auto" />
             <p className="font-accent text-xl italic font-medium text-secondary leading-relaxed mb-6 tracking-tight">
