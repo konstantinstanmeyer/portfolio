@@ -49,7 +49,7 @@ export default function Home() {
           </FadeIn>
         </div>
       </section>
-      <section id="skills" className="max-w-[1100px] mx-auto px-6 py-24">
+      <section id="skills" className="max-w-[1100px] mx-auto px-6 py-24 scroll-mt-[10vh]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           <FadeIn>
             <h2 className="font-display text-2xl md:text-3xl font-normal leading-snug text-primary mb-4">

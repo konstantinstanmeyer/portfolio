@@ -26,7 +26,7 @@ export default function ProjectsPage() {
             <StaggerItem key={project.id}>
               <motion.article
                 id={project.id}
-                className="group relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-8 rounded-2xl bg-[rgba(255,255,255,0.02)] border border-[rgba(138,138,133,0.1)] hover:border-[rgba(201,162,39,0.3)] transition-all duration-300"
+                className="scroll-mt-[20vh] group relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-8 rounded-2xl bg-[rgba(255,255,255,0.02)] border border-[rgba(138,138,133,0.1)] hover:border-[rgba(201,162,39,0.3)] transition-all duration-300"
                 whileHover={{ y: -4 }}
               >
                 <div className={`relative aspect-video lg:aspect-[16.5/9] rounded-lg overflow-hidden ${
