@@ -60,6 +60,7 @@ export const projects: Project[] = [
         timeline: '2 days',
         role: 'Design & Development',
         liveUrl: 'https://color-picker-tawny-nu.vercel.app/',
+        githubUrl: 'https://github.com/konstantinstanmeyer/color-picker',
         image: '/projects/png-recolor.webp' ,
         images: ['/projects/gpng-recolor.webp'],
     },
