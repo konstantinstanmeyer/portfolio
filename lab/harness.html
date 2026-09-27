@@ -1,0 +1,175 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>figure harness</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #111; overflow: hidden; }
+  canvas { display: block; }
+  #err { position: fixed; top: 8px; left: 8px; right: 8px; color: #ff5555; font: 14px monospace; white-space: pre-wrap; z-index: 10; }
+  .label { position: fixed; color: #888; font: 12px monospace; z-index: 5; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "/vendor/build/three.module.js", "three/addons/": "/vendor/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="err"></div>
+<script type="module">
+/*
+  Figure harness.
+  URL params:
+    a      attempt folder name under /attempts/<a>/figure.js   (required)
+    sheet  views | anim | animside | motion | stage | single   (default views)
+    view   front | threequarter | side | back | head | stage  (for sheet=single)
+    t      seconds (for sheet=single / views)                  (default 0)
+    bg     light | black                                        (default light, stage sheets force black)
+  The page renders once (deterministically) and sets document.title = "READY" (or "ERROR").
+*/
+import * as THREE from 'three';
+
+const q = new URLSearchParams(location.search);
+const A = q.get('a');
+const SHEET = q.get('sheet') || 'views';
+const T = parseFloat(q.get('t') || '0');
+const errBox = document.getElementById('err');
+function fail(e) { errBox.textContent = 'ERROR: ' + (e && e.stack || e); document.title = 'ERROR'; console.error(e); }
+window.addEventListener('error', (e) => fail(e.error || e.message));
+window.addEventListener('unhandledrejection', (e) => fail(e.reason));
+
+const W = window.innerWidth, H = window.innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.autoClear = false;
+document.body.appendChild(renderer.domElement);
+
+function makeScene(bgHex) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(bgHex);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 1.1);
+  scene.add(hemi);
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  key.position.set(3, 5, 4);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.55);
+  fill.position.set(-4, 2, -2);
+  scene.add(fill);
+  return scene;
+}
+
+const VIEWS = {
+  front:        { pos: [0, 1.0, 4.4],  look: [0, 0.9, 0], fov: 35 },
+  threequarter: { pos: [2.9, 1.2, 3.3], look: [0, 0.9, 0], fov: 35 },
+  side:         { pos: [4.4, 1.0, 0],  look: [0, 0.9, 0], fov: 35 },
+  back:         { pos: [0, 1.0, -4.4], look: [0, 0.9, 0], fov: 35 },
+  head:         { pos: [0.5, 1.5, 1.7], look: [0, 1.4, 0], fov: 35 },
+  stage:        { pos: [0, 2.2, 16],   look: [0, 1.2, 0], fov: 35 },
+};
+function cam(name, aspect) {
+  const v = VIEWS[name];
+  const c = new THREE.PerspectiveCamera(v.fov, aspect, 0.05, 200);
+  c.position.set(...v.pos);
+  c.lookAt(...v.look);
+  return c;
+}
+
+function label(text, x, y) {
+  const d = document.createElement('div');
+  d.className = 'label';
+  d.textContent = text;
+  d.style.left = x + 'px';
+  d.style.top = y + 'px';
+  document.body.appendChild(d);
+}
+
+// cells: [{view, t, title}] laid out in a grid (cols)
+function renderGrid(fig, scene, cells, cols) {
+  const rows = Math.ceil(cells.length / cols);
+  const cw = Math.floor(W / cols), ch = Math.floor(H / rows);
+  renderer.setScissorTest(true);
+  renderer.setClearColor(scene.background);
+  renderer.setViewport(0, 0, W, H); renderer.setScissor(0, 0, W, H);
+  renderer.clear();
+  cells.forEach((cell, i) => {
+    const cx = (i % cols) * cw, cy = Math.floor(i / cols) * ch;
+    const glY = H - cy - ch;
+    renderer.setViewport(cx, glY, cw, ch);
+    renderer.setScissor(cx, glY, cw, ch);
+    fig.update(cell.t, 1 / 60);
+    renderer.clear();
+    renderer.render(scene, cam(cell.view, cw / ch));
+    label(cell.title, cx + 8, cy + 6);
+  });
+  renderer.setScissorTest(false);
+}
+
+// motion overlay: silhouette at t0 (red) vs tk (cyan), several pairs
+function renderMotion(fig, scene, pairs, view) {
+  const cols = pairs.length;
+  const cw = Math.floor(W / cols), ch = H;
+  const red = new THREE.MeshBasicMaterial({ color: 0xff2040, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
+  const cyan = new THREE.MeshBasicMaterial({ color: 0x00c8ff, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
+  const bg = scene.background;
+  scene.background = null;
+  renderer.setClearColor(0xffffff, 1);
+  renderer.setScissorTest(true);
+  renderer.setViewport(0, 0, W, H); renderer.setScissor(0, 0, W, H);
+  renderer.clear();
+  pairs.forEach(([t0, t1], i) => {
+    const cx = i * cw;
+    renderer.setViewport(cx, 0, cw, ch);
+    renderer.setScissor(cx, 0, cw, ch);
+    const c = cam(view, cw / ch);
+    fig.update(t0, 1 / 60); scene.overrideMaterial = red; renderer.render(scene, c);
+    fig.update(t1, 1 / 60); scene.overrideMaterial = cyan; renderer.render(scene, c);
+    label(`${view}: red t=${t0} vs cyan t=${t1}`, cx + 8, 6);
+  });
+  scene.overrideMaterial = null;
+  scene.background = bg;
+  renderer.setScissorTest(false);
+}
+
+(async () => {
+  if (!A) throw new Error('missing ?a=<attempt>');
+  const mod = await import(`/attempts/${A}/figure.js?v=${Date.now()}`);
+  const fig = mod.createFigure();
+  if (!fig || !fig.object || typeof fig.update !== 'function') throw new Error('createFigure() must return { object, update(t, dt) }');
+
+  const stageLike = SHEET === 'stage';
+  const bg = stageLike || q.get('bg') === 'black' ? 0x000000 : 0xf2f2f2;
+  const scene = makeScene(bg);
+  scene.add(fig.object);
+
+  const box = new THREE.Box3().setFromObject(fig.object);
+  const size = box.getSize(new THREE.Vector3());
+  let tris = 0;
+  fig.object.traverse((o) => { if (o.isMesh && o.geometry) { const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
+
+  if (SHEET === 'views') {
+    renderGrid(fig, scene, [
+      { view: 'front', t: T, title: `front t=${T}` },
+      { view: 'threequarter', t: T, title: 'three-quarter' },
+      { view: 'side', t: T, title: 'side (from +X)' },
+      { view: 'back', t: T, title: 'back' },
+    ], 4);
+  } else if (SHEET === 'anim' || SHEET === 'animside') {
+    const v = SHEET === 'anim' ? 'front' : 'side';
+    const ts = [0, 1, 2, 3, 4, 5, 6, 7];
+    renderGrid(fig, scene, ts.map((t) => ({ view: v, t, title: `${v} t=${t}` })), 4);
+  } else if (SHEET === 'motion') {
+    const view = q.get('view') || 'front';
+    renderMotion(fig, scene, [[0, 1], [0, 2], [0, 3], [0, 4]], view);
+  } else if (SHEET === 'stage') {
+    renderGrid(fig, scene, [{ view: 'stage', t: T, title: `stage t=${T} (figure small in black space)` }], 1);
+  } else {
+    const view = q.get('view') || 'front';
+    renderGrid(fig, scene, [{ view, t: T, title: `${view} t=${T}` }], 1);
+  }
+  label(`attempt=${A}  bbox=${size.x.toFixed(2)}x${size.y.toFixed(2)}x${size.z.toFixed(2)}  minY=${box.min.y.toFixed(3)}  tris=${Math.round(tris)}`, 8, H - 20);
+  document.title = 'READY';
+})().catch(fail);
+</script>
+</body>
+</html>

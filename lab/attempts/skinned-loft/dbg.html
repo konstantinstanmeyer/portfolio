@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>dbg</title>
+<style>html, body { margin: 0; height: 100%; background: #f2f2f2; overflow: hidden; } canvas { display: block; }</style>
+<script type="importmap">
+{ "imports": { "three": "/vendor/build/three.module.js", "three/addons/": "/vendor/examples/jsm/" } }
+</script>
+</head>
+<body>
+<script type="module">
+// Debug viewer for the skinned-loft attempt: custom camera via ?cam=x,y,z&look=x,y,z&fov=..&t=..
+// Multiple cells: ?cells=cam1;look1|cam2;look2
+import * as THREE from 'three';
+const q = new URLSearchParams(location.search);
+const T = parseFloat(q.get('t') || '0');
+const bg = q.get('bg') === 'black' ? 0x000000 : 0xf2f2f2;
+const W = innerWidth, H = innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.autoClear = false;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(bg);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 1.1));
+const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 5, 4); scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.55); fill.position.set(-4, 2, -2); scene.add(fill);
+const mod = await import('./figure.js?v=' + Date.now());
+const fig = mod.createFigure();
+scene.add(fig.object);
+const cells = (q.get('cells') || '-2.2,1.7,3.6;0,0.9,0|0.9,0.35,1.2;0.1,0.1,0').split('|').map((c) => c.split(';').map((v) => v.split(',').map(Number)));
+const fov = parseFloat(q.get('fov') || '30');
+const cw = Math.floor(W / cells.length);
+renderer.setScissorTest(true);
+cells.forEach(([pos, look, tt], i) => {
+  renderer.setViewport(i * cw, 0, cw, H); renderer.setScissor(i * cw, 0, cw, H);
+  renderer.setClearColor(bg); renderer.clear();
+  fig.update(tt ? tt[0] : T, 1 / 60);
+  const cam = new THREE.PerspectiveCamera(fov, cw / H, 0.02, 100);
+  cam.position.set(...pos); cam.lookAt(...look);
+  renderer.render(scene, cam);
+});
+document.title = 'READY';
+</script>
+</body>
+</html>
