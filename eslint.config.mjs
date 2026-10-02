@@ -12,8 +12,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Scratch experiments (plain JS, rendered outside Next).
-    "lab/**",
   ]),
 ]);
 
