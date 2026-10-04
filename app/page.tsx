@@ -1,9 +1,10 @@
+import Landing from "@/components/Landing";
+
 export default function Home() {
   return (
-    <main className="grid h-dvh place-items-center bg-black">
-      <h1 className="text-sm tracking-[0.4em] text-white/40 uppercase">
-        Konstantin Stanmeyer
-      </h1>
+    <main className="relative h-dvh w-full overflow-hidden">
+      <h1 className="sr-only">Konstantin Stanmeyer</h1>
+      <Landing />
     </main>
   );
 }

@@ -33,7 +33,14 @@ export async function sendMessage(
     const res = await fetch(webhook, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ content: message, text: message, message }),
+      body: JSON.stringify({
+        // Discord: visitor text must never ping anyone.
+        content: message,
+        allowed_mentions: { parse: [] },
+        // Slack: escape control characters so <!channel> etc. stay literal.
+        text: message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+        message,
+      }),
     });
     return { status: res.ok ? "sent" : "error", at };
   } catch {
