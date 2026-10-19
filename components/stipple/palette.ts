@@ -6,7 +6,7 @@
 export interface Palette {
   /** Background. */
   paper: string;
-  /** Dots, and the message box text and rule. */
+  /** Dots. */
   ink: string;
   /** Light dots on a dark ground: the shading flips so lit faces gather the dots. */
   glow: boolean;

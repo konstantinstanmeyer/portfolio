@@ -3,11 +3,20 @@
 import { useEffect, useImperativeHandle, useRef, type Ref } from "react";
 import { stippleFont } from "./font";
 import { createBuilder } from "./build-client";
+import { isLanding } from "@/components/hyperspace/landing";
+import { registerDotSource } from "./dot-sources";
 import type { GlyphId } from "./glyphs";
-import { prepareName, prepareTitle } from "./raster";
-import { createDotRenderer, type DotRenderer } from "./renderer";
+import { homeLayout, prepareName, prepareTitle, type HomeLayout } from "./raster";
+import { createDotRenderer, MAX_TITLES, type DotRenderer } from "./renderer";
 import { createSim } from "./sim-client";
-import type { Rect, StippleTargets } from "./stipple";
+import type { Dots } from "./stage";
+import type { Rect, StippleTargets, TitleTargets } from "./stipple";
+
+/**
+ * What the name turns into while an icon is hovered: other words in its place
+ * (`lines`), or words added around it (`before` and `after`) while it stays put.
+ */
+export type TitleSpec = { lines: string[] } | { before?: string; after: string };
 
 export interface StippleHandle {
   pulse(x: number, y: number): void;
@@ -29,27 +38,77 @@ const IDLE_FRAME_MS = 1000 / 30 - 4;
 // Below this peak speed (px/s) the dots count as at rest.
 const SETTLED_SPEED = 25;
 
+/** `extra` followed by `rest`. */
+function cat(extra: Float32Array, rest: Float32Array): Float32Array {
+  const out = new Float32Array(extra.length + rest.length);
+  out.set(extra);
+  out.set(rest, extra.length);
+  return out;
+}
+
+/**
+ * The name's targets with `extra` dots ahead of its own (first, so their
+ * indices hold when the name is rebuilt with a different count). They belong
+ * to the name's group, so they move as its dots do, but keep their place and
+ * look while a title shows.
+ */
+function withExtra(t: StippleTargets, extra: Dots): StippleTargets {
+  const group = new Uint8Array(extra.count + t.count);
+  group.set(t.group, extra.count);
+  return {
+    ...t,
+    count: extra.count + t.count,
+    home: cat(extra.home, t.home),
+    attrs: cat(extra.attrs, t.attrs),
+    group,
+    decor: t.decor && { home: cat(extra.home, t.decor.home), attrs: cat(extra.attrs, t.decor.attrs) },
+  };
+}
+
 interface StippleNameProps {
   ref?: Ref<StippleHandle>;
   /** Icons stippled in a row under the name. */
   icons?: GlyphId[];
-  /** For each icon, the title (as lines) that replaces the name while it's hovered. */
-  titles?: string[][];
+  /** For each icon, what the name turns into while it's hovered. */
+  titles?: TitleSpec[];
   /** Called with each icon's position whenever the layout is rebuilt. */
   onIconLayout?: (rects: Rect[]) => void;
+  /**
+   * The home page's layout (raster.ts homeLayout): the name and icons on the
+   * left with the portrait on the right, or below the portrait on narrow screens.
+   */
+  split?: boolean;
+  /** With `split`: called with the layout whenever the name is laid out again. */
+  onLayout?: (layout: HomeLayout) => void;
+  /** With `split`: more dots (page coordinates) to move with the name's, e.g. the portrait. */
+  extraDots?: (layout: HomeLayout, kind: "webgl" | "2d") => Promise<Dots | null>;
 }
 
-export default function StippleName({ ref, icons = [], titles = [], onIconLayout }: StippleNameProps) {
+export default function StippleName({
+  ref,
+  icons = [],
+  titles = [],
+  onIconLayout,
+  split = false,
+  onLayout,
+  extraDots,
+}: StippleNameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const handleRef = useRef<StippleHandle>(IDLE_HANDLE);
   const iconsRef = useRef(icons);
   const titlesRef = useRef(titles);
   const onIconLayoutRef = useRef(onIconLayout);
+  const onLayoutRef = useRef(onLayout);
+  const extraDotsRef = useRef(extraDots);
+  const splitRef = useRef(split);
 
   useEffect(() => {
+    splitRef.current = split;
     iconsRef.current = icons;
     titlesRef.current = titles;
     onIconLayoutRef.current = onIconLayout;
+    onLayoutRef.current = onLayout;
+    extraDotsRef.current = extraDots;
   });
 
   useImperativeHandle(ref, () => ({
@@ -68,6 +127,8 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
     const { fontFamily, fontWeight } = stippleFont.style;
     let renderer: DotRenderer | null = null;
     let targets: StippleTargets | null = null;
+    // Dots that move with the name's (ahead of them in `targets`).
+    let extra: Dots | null = null;
     let width = 0;
     let height = 0;
     let builtFor = "";
@@ -88,10 +149,11 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
     let rebuildTimer = 0;
     let activePointer: number | null = null;
     // Title crossfade: each title's weight, and which one is wanted (-1 = name).
-    const morph = new Float32Array(3);
+    const morph = new Float32Array(MAX_TITLES);
     let morphTo = -1;
     let titleTimer = 0;
     const titleAttrs: (Float32Array | null)[] = [];
+    const titleHomes: (Float32Array | null)[] = [];
     let lastPointerTime = 0;
 
     const sizeCanvas = () => {
@@ -118,11 +180,17 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
       if (key === builtFor) return;
       builtFor = key;
       const mine = ++version;
+      const layout = splitRef.current ? homeLayout(width, height) : null;
+      if (layout) onLayoutRef.current?.(layout);
       let job;
       try {
         job = prepareName({
+          area: layout?.name,
+          align: layout?.split ? "left" : "center",
           lines: LINES,
           icons: iconsRef.current,
+          // Only one set of words-around-the-name is supported; the first wins.
+          decor: titlesRef.current.find((spec) => "after" in spec),
           fontFamily,
           fontWeight,
           width,
@@ -134,16 +202,19 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
       }
       if (!job) return;
       const [w, h] = [width, height];
-      builder.name(job).then((result) => {
+      const more = layout && extraDotsRef.current ? extraDotsRef.current(layout, renderer.kind) : null;
+      Promise.all([builder.name(job), more?.catch(() => null)]).then(([result, added]) => {
         if (disposed || mine !== version) return;
-        targets = result;
-        sim.setTargets(result, w, h, spawn);
+        extra = added ?? null;
+        targets = extra ? withExtra(result, extra) : result;
+        sim.setTargets(targets, w, h, spawn);
         // setTargets clears the simulation's hover; re-apply a live one. The
         // titles are rebuilt for these dots, so their looks start hidden.
         if (morphTo >= 0) sim.hoverIcon(morphTo);
+        applyBeat();
         morph.fill(0);
         uploadTargets();
-        onIconLayoutRef.current?.(result.icons);
+        onIconLayoutRef.current?.(targets.icons);
         if (builder.background) scheduleTitles(mine, TITLE_GAP_MS);
         else titlesPending = mine;
         wake();
@@ -154,18 +225,28 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
     const scheduleTitles = (mine: number, delay: number) => {
       window.clearTimeout(titleTimer);
       titleAttrs.length = 0;
+      titleHomes.length = 0;
       let next = 0;
+      const apply = (index: number, built: TitleTargets | null) => {
+        if (disposed || mine !== version || !built || !targets) return;
+        // Titles are dealt from the name's own dots; the extra ones stay as they are.
+        const title =
+          extra && built.home.length < targets.count * 2
+            ? { home: cat(extra.home, built.home), attrs: cat(extra.attrs, built.attrs) }
+            : built;
+        sim.setTitle(index, title.home);
+        renderer?.setTitle(index, title.attrs, targets.count);
+        titleAttrs[index] = title.attrs;
+        titleHomes[index] = title.home;
+      };
       const step = () => {
-        const lines = titlesRef.current[next];
+        const spec = titlesRef.current[next];
         const basis = targets?.basis;
-        if (disposed || mine !== version || !lines || !basis || next >= 3) return;
+        if (disposed || mine !== version || !spec || !basis || next >= MAX_TITLES) return;
         const index = next++;
-        builder.title(prepareTitle(basis, lines, index)).then((title) => {
-          if (disposed || mine !== version || !title || !targets) return;
-          sim.setTitle(index, title.home);
-          renderer?.setTitle(index, title.attrs, targets.count);
-          titleAttrs[index] = title.attrs;
-        });
+        // Words around the name were built with it; others are dealt now.
+        if ("after" in spec) apply(index, targets?.decor ?? null);
+        else builder.title(prepareTitle(basis, spec.lines, index)).then((title) => apply(index, title));
         titleTimer = window.setTimeout(step, TITLE_GAP_MS);
       };
       titleTimer = window.setTimeout(step, delay);
@@ -194,7 +275,7 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
       last = now;
       // Ease each title's look toward shown (the wanted one) or hidden.
       const blend = 1 - Math.exp(-dt / MORPH_TIME);
-      for (let k = 0; k < 3; k++) {
+      for (let k = 0; k < MAX_TITLES; k++) {
         const target = k === morphTo && titleAttrs[k] ? 1 : 0;
         const gap = target - morph[k];
         if (gap === 0) continue;
@@ -230,13 +311,22 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
       start();
     };
 
+    // While a title that only adds words around the name shows (About's "?"),
+    // the name itself beats, so the hover reads clearly. The extra dots (the
+    // portrait) stay still.
+    const applyBeat = () => {
+      const spec = morphTo >= 0 ? titlesRef.current[morphTo] : undefined;
+      sim.setBeat(!!spec && "after" in spec, extra?.count ?? 0);
+    };
+
     renderer = createDotRenderer(canvas);
     sizeCanvas();
 
     const onFontReady = () => {
       if (disposed) return;
       fontReady = true;
-      build(motionQuery.matches ? "home" : "enter");
+      // Arriving out of a hyperspace jump, the jump was the entrance: start in place.
+      build(motionQuery.matches || isLanding() ? "home" : "enter");
     };
     // Build even if the font fails to load; the fallback face still reads.
     document.fonts.load(`${fontWeight ?? 400} 100px ${fontFamily}`).then(onFontReady, onFontReady);
@@ -249,6 +339,7 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
       hoverIcon(index) {
         sim.hoverIcon(index);
         morphTo = index ?? -1;
+        applyBeat();
         wake();
       },
     };
@@ -323,6 +414,17 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
       wake();
     };
 
+    // The dots at home (or in whichever title shows), for a page transition to launch from.
+    const releaseSource = registerDotSource(() => {
+      if (!targets || drawnCount === 0) return null;
+      let shown = -1;
+      for (let k = 0; k < MAX_TITLES; k++) if (morph[k] > 0.5) shown = k;
+      const home = (shown >= 0 && titleHomes[shown]) || targets.home;
+      const attrs = (shown >= 0 && titleAttrs[shown]) || targets.attrs;
+      // The extra dots too, even behind their picture: it breaks up into them.
+      return { pos: home, attrs, count: targets.count };
+    });
+
     window.addEventListener("resize", onResize);
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", onPointerLeave);
@@ -339,6 +441,7 @@ export default function StippleName({ ref, icons = [], titles = [], onIconLayout
       stop();
       window.clearTimeout(rebuildTimer);
       window.clearTimeout(titleTimer);
+      releaseSource();
       window.removeEventListener("resize", onResize);
       window.removeEventListener("pointermove", onPointerMove);
       document.documentElement.removeEventListener("pointerleave", onPointerLeave);

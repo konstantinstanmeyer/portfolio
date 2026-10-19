@@ -1,4 +1,4 @@
-import Link from "next/link";
+import JumpLink from "./hyperspace/JumpLink";
 import type { Rect } from "./stipple/stipple";
 import { ICON_LINKS } from "./links";
 
@@ -32,7 +32,7 @@ export default function IconRow({ rects, onHover }: { rects: Rect[]; onHover?: (
           return (
             <li key={id}>
               {href.startsWith("/") ? (
-                <Link href={href} aria-label={label} title={label} className={className} style={style} {...events} />
+                <JumpLink href={href} aria-label={label} title={label} className={className} style={style} {...events} />
               ) : (
                 <a
                   href={href}

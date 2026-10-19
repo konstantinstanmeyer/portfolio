@@ -1,0 +1,131 @@
+/* About: one paragraph in the home page's stipple, on the same left edge as
+   the home page's name. The real text sits under the dots: faint until
+   they're in, then transparent (and full ink without JS or WebGL). */
+
+.page {
+  --latent: color-mix(in srgb, var(--ink) 22%, transparent);
+  display: grid;
+  align-items: center;
+  min-height: 100dvh;
+  padding: clamp(32px, 8vh, 96px) 4vw;
+  color: var(--ink);
+}
+
+@media (min-width: 820px) {
+  .page {
+    padding-inline: 6vw;
+  }
+}
+
+.paragraph {
+  --bleed: 0.5em;
+  position: relative;
+  max-width: 24em;
+  margin: 0;
+  font-size: clamp(26px, 2.7vw, 42px);
+  line-height: 1.34;
+  letter-spacing: 0;
+  color: var(--latent);
+  transition: color 600ms ease;
+}
+
+.paragraph[data-state="drawn"] {
+  color: transparent;
+}
+
+.paragraph[data-state="failed"] {
+  color: var(--ink);
+}
+
+@media (scripting: none) {
+  .paragraph {
+    color: var(--ink);
+  }
+}
+
+.paragraph::selection,
+.paragraph ::selection {
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+  color: var(--ink);
+}
+
+/* Over the dots, selected text stays invisible (the highlight shows through). */
+.paragraph[data-state="drawn"]::selection,
+.paragraph[data-state="drawn"] ::selection {
+  color: transparent;
+}
+
+/* The probe whose top is the text's baseline. */
+.baseline {
+  display: inline-block;
+  width: 0;
+  height: 0;
+}
+
+.canvas {
+  position: absolute;
+  left: calc(var(--bleed) * -1);
+  top: calc(var(--bleed) * -1);
+  width: calc(100% + var(--bleed) * 2);
+  height: calc(100% + var(--bleed) * 2);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.paragraph[data-state="drawn"] .canvas {
+  opacity: 1;
+}
+
+/* Links are underlined in dots; hovered or focused, a soft light falls on them. */
+.link {
+  position: relative;
+  z-index: 1;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 0.3em;
+}
+
+.link::after {
+  content: "";
+  position: absolute;
+  inset: -0.12em -0.3em -0.2em;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ink) 16%, transparent), transparent);
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+
+/* Without the dots (no JS, or they failed), the real links are underlined. */
+.paragraph:not([data-state="drawn"]) .link {
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.16em;
+}
+
+@media (scripting: none) {
+  .paragraph .link {
+    text-decoration: underline;
+    text-decoration-thickness: 0.06em;
+    text-underline-offset: 0.16em;
+  }
+}
+
+.link:hover::after,
+.link:focus-visible::after {
+  opacity: 1;
+}
+
+.link:focus-visible {
+  outline: 1px dotted color-mix(in srgb, var(--ink) 70%, transparent);
+  outline-offset: 0.2em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paragraph,
+  .canvas,
+  .link::after {
+    transition: none;
+  }
+}

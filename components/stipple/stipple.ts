@@ -30,7 +30,16 @@ export interface StippleTargets {
   iconField: ShapeField | null;
   /** How the name was set, so titles can be set to match (null when empty). */
   basis: NameBasis | null;
+  /**
+   * Words added around the name (e.g. a "?" after it): every dot's home and
+   * look while they show. Their dots belong to EXTRA_GROUP and otherwise
+   * hide inside the name.
+   */
+  decor: TitleTargets | null;
 }
+
+/** Group for dots that only show in the decoration around the name. */
+export const EXTRA_GROUP = 255;
 
 export interface NameBasis {
   fontFamily: string;
@@ -38,6 +47,9 @@ export interface NameBasis {
   fontPx: number;
   stacked: boolean;
   maxWidth: number;
+  /** How the name's lines are aligned, and its left edge (CSS px). */
+  align: "left" | "center";
+  left: number;
   /** Centre of the name block, in CSS px. */
   centerX: number;
   centerY: number;
@@ -84,6 +96,8 @@ export interface Mask {
 export interface NameJob {
   name: Mask;
   icons: Mask | null;
+  /** Words painted around the name, one mask each, for the decoration (see StippleTargets.decor). */
+  decor: Mask[];
   iconRects: Rect[];
   width: number;
   maxParticles: number;
@@ -117,6 +131,8 @@ const GAP_THIN = 0.2;
 // Toward and past the edges, dots fade to this share of their opacity and size.
 const EDGE_ALPHA = 0.22;
 const EDGE_SIZE = 0.7;
+// The deepest the fade reaches in from the outline, in stroke half-widths.
+const EDGE_BAND = 0.45;
 // Name dots a title doesn't need drift out by this factor (about its centre)
 // plus a little jitter while they fade.
 const SPARE_SPREAD = 1.08;
@@ -327,9 +343,13 @@ function shadeMask(mask: Mask, glow: boolean, withField = false): Piece {
   const spray = blurred(shape, w, h, radius * 0.25, 2);
   // How far inside the silhouette a point sits, softly: the dots fade toward
   // the edges like in hand stippling instead of stopping at a hard outline.
+  // A blur alone fades stroke ends (an n's feet) much further in than sides,
+  // into rounded stubs, so the fade is never deeper than a band along the
+  // outline itself.
   const inset = blurred(shape, w, h, radius * 0.6, 2);
   const fade = new Float32Array(size);
-  for (let i = 0; i < size; i++) fade[i] = smoothstep(0.12, 0.85, inset[i]);
+  const band = radius * EDGE_BAND;
+  for (let i = 0; i < size; i++) fade[i] = Math.max(smoothstep(0.12, 0.85, inset[i]), smoothstep(0, band, depth[i]));
 
   const lightTilt = 1 / (radius * 9);
   const blotch = 1 / (radius * 4.5);
@@ -406,6 +426,7 @@ const EMPTY: StippleTargets = {
   icons: [],
   iconField: null,
   basis: null,
+  decor: null,
 };
 
 export const EMPTY_TARGETS = EMPTY;
@@ -416,6 +437,10 @@ export function finishName(job: NameJob): StippleTargets {
   const { glow, fontPx } = job.basis;
   const pieces: Piece[] = [shadeMask(job.name, glow)];
   if (job.icons) pieces.push(shadeMask(job.icons, glow, true));
+  // The decoration comes last, so it can borrow homes from the name's dots.
+  const decorFrom = pieces.length;
+  for (const mask of job.decor) pieces.push(shadeMask(mask, glow));
+  const hasDecor = pieces.length > decorFrom;
   const iconRects = job.iconRects;
 
   // One density for everything, so the icons share the name's texture.
@@ -432,8 +457,13 @@ export function finishName(job: NameJob): StippleTargets {
   const home = new Float32Array(count * 2);
   const attrs = new Float32Array(count * 2);
   const group = new Uint8Array(count);
+  // Where decoration dots go, and how they look, while it shows.
+  const decorHome = hasDecor ? new Float32Array(count * 2) : null;
+  const decorAttrs = hasDecor ? new Float32Array(count * 2) : null;
+  let nameCount = 0;
   let placed = 0;
   pieces.forEach((piece, p) => {
+    if (p === 1) nameCount = placed;
     const quota = p === pieces.length - 1 ? count - placed : Math.round((count * wantedPer[p]) / Math.max(1, wanted));
     const end = Math.min(count, placed + quota);
     let guard = quota * 400;
@@ -443,12 +473,28 @@ export function finishName(job: NameJob): StippleTargets {
       const cell = (py | 0) * piece.w + (px | 0);
       if (rand() >= piece.darkness[cell]) continue;
       const fade = piece.fade[cell];
-      home[placed * 2] = piece.x + px / piece.scale;
-      home[placed * 2 + 1] = piece.y + py / piece.scale;
-      attrs[placed * 2] = (1.05 + rand() * 0.6) * dotSize * (EDGE_SIZE + (1 - EDGE_SIZE) * fade);
-      attrs[placed * 2 + 1] = (0.7 + rand() * 0.25) * (EDGE_ALPHA + (1 - EDGE_ALPHA) * fade);
-      // Icons share one mask; each dot belongs to the nearest icon slot.
-      group[placed] = p === 0 ? 0 : nearestIcon(iconRects, home[placed * 2]) + 1;
+      const size = (1.05 + rand() * 0.6) * dotSize * (EDGE_SIZE + (1 - EDGE_SIZE) * fade);
+      const alpha = (0.7 + rand() * 0.25) * (EDGE_ALPHA + (1 - EDGE_ALPHA) * fade);
+      if (p >= decorFrom && decorHome && decorAttrs) {
+        // Hidden inside the name (at a random name dot) until the decoration shows.
+        const j = Math.floor(rand() * Math.max(1, nameCount));
+        home[placed * 2] = home[j * 2];
+        home[placed * 2 + 1] = home[j * 2 + 1];
+        attrs[placed * 2] = size;
+        attrs[placed * 2 + 1] = 0;
+        decorHome[placed * 2] = piece.x + px / piece.scale;
+        decorHome[placed * 2 + 1] = piece.y + py / piece.scale;
+        decorAttrs[placed * 2] = size;
+        decorAttrs[placed * 2 + 1] = alpha;
+        group[placed] = EXTRA_GROUP;
+      } else {
+        home[placed * 2] = piece.x + px / piece.scale;
+        home[placed * 2 + 1] = piece.y + py / piece.scale;
+        attrs[placed * 2] = size;
+        attrs[placed * 2 + 1] = alpha;
+        // Icons share one mask; each dot belongs to the nearest icon slot.
+        group[placed] = p === 0 ? 0 : nearestIcon(iconRects, home[placed * 2]) + 1;
+      }
       placed++;
     }
   });
@@ -467,8 +513,18 @@ export function finishName(job: NameJob): StippleTargets {
   const sortedHome = new Float32Array(placed * 2);
   const sortedAttrs = new Float32Array(placed * 2);
   const sortedGroup = new Uint8Array(placed);
+  const sortedDecorHome = decorHome ? new Float32Array(placed * 2) : null;
+  const sortedDecorAttrs = decorAttrs ? new Float32Array(placed * 2) : null;
   for (let i = 0; i < placed; i++) {
     const dst = columns[column[i]]++;
+    if (sortedDecorHome && sortedDecorAttrs && decorHome && decorAttrs) {
+      // Everyone else stays as they are while the decoration shows.
+      const extra = group[i] === EXTRA_GROUP;
+      sortedDecorHome[dst * 2] = extra ? decorHome[i * 2] : home[i * 2];
+      sortedDecorHome[dst * 2 + 1] = extra ? decorHome[i * 2 + 1] : home[i * 2 + 1];
+      sortedDecorAttrs[dst * 2] = extra ? decorAttrs[i * 2] : attrs[i * 2];
+      sortedDecorAttrs[dst * 2 + 1] = extra ? decorAttrs[i * 2 + 1] : attrs[i * 2 + 1];
+    }
     sortedHome[dst * 2] = home[i * 2];
     sortedHome[dst * 2 + 1] = home[i * 2 + 1];
     sortedAttrs[dst * 2] = attrs[i * 2];
@@ -486,6 +542,7 @@ export function finishName(job: NameJob): StippleTargets {
     icons: iconRects,
     iconField: pieces[1]?.field ?? null,
     basis: { ...job.basis, areaPerDot, dotSize },
+    decor: sortedDecorHome && sortedDecorAttrs ? { home: sortedDecorHome, attrs: sortedDecorAttrs } : null,
   };
 }
 

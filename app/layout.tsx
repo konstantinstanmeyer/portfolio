@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { CSSProperties } from "react";
+import HyperspaceProvider from "@/components/hyperspace/HyperspaceProvider";
+import PerformanceNotice from "@/components/PerformanceNotice";
 import { PALETTE } from "@/components/stipple/palette";
 import "./globals.css";
 
@@ -43,7 +45,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       style={htmlStyle}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-paper text-ink">{children}</body>
+      <body className="min-h-full bg-paper text-ink">
+        {/* Page changes go by hyperspace; the overlay outlives the pages it moves between. */}
+        <HyperspaceProvider>{children}</HyperspaceProvider>
+        {/* Says so when reduced motion, missing graphics or a capped frame rate hold the dots back. */}
+        <PerformanceNotice />
+      </body>
     </html>
   );
 }

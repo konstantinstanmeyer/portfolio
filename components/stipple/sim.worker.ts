@@ -4,6 +4,7 @@
 
 import type { SimFrameMessage, ToSim } from "./sim-protocol";
 import { ParticleField } from "./simulation";
+import { EXTRA_GROUP } from "./stipple";
 
 const scope = self as unknown as {
   onmessage: ((event: MessageEvent<ToSim>) => void) | null;
@@ -23,7 +24,7 @@ function warmUp(): void {
   for (let i = 0; i < n; i++) {
     home[i * 2] = 300 + (i % 100) * 8;
     home[i * 2 + 1] = 250 + Math.floor(i / 100) * 8;
-    group[i] = i % 10 === 0 ? 1 + ((i / 10) % 3) : 0;
+    group[i] = i % 10 === 0 ? 1 + ((i / 10) % 3) : i % 10 === 5 ? EXTRA_GROUP : 0;
   }
   const size = 64;
   const sdf = new Float32Array(size * size);
@@ -103,6 +104,9 @@ scope.onmessage = ({ data }) => {
       break;
     case "hover":
       field.hoverIcon(data.index);
+      break;
+    case "beat":
+      field.setBeat(data.on, data.from);
       break;
     case "pulse":
       field.pulse(data.x, data.y);

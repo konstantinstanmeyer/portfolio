@@ -2,7 +2,7 @@
 // 32-unit box. Strokes are heavier than a UI icon's so they survive being
 // inflated and drawn in dots; the shapes follow the Myrtle Street Media mark.
 
-export type GlyphId = "myrtle" | "camera" | "notes";
+export type GlyphId = "person" | "myrtle" | "camera" | "notes";
 
 const STROKE = 4.6;
 
@@ -14,8 +14,16 @@ const CAMERA_BODY =
   "M2.5 12a3 3 0 0 1 3-3h4.6l2.2-3.6h7.4l2.2 3.6h4.6a3 3 0 0 1 3 3v14.5a3 3 0 0 1-3 3h-21a3 3 0 0 1-3-3Z";
 const NOTES_STEMS = "M12.6 24V8.6M26.6 21.4V5.8";
 const NOTES_BEAM = "M10.3 6.3 28.9 2.8v5L10.3 11.3Z";
+// A head-and-shoulders bust, for "about".
+const PERSON_SHOULDERS = "M4.5 29.5c0-6.6 5.1-11.2 11.5-11.2s11.5 4.6 11.5 11.2";
 
 const PAINTERS: Record<GlyphId, (ctx: CanvasRenderingContext2D) => void> = {
+  person(ctx) {
+    ctx.beginPath();
+    ctx.arc(16, 9.6, 5.6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.stroke(new Path2D(PERSON_SHOULDERS));
+  },
   myrtle(ctx) {
     ctx.stroke(new Path2D(MYRTLE_ARCH));
     ctx.stroke(new Path2D(MYRTLE_STEM));

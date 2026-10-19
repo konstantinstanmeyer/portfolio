@@ -10,6 +10,8 @@ export type ToSim =
   | { type: "holdStart"; x: number; y: number }
   | { type: "holdEnd" }
   | { type: "hover"; index: number | null }
+  /** The name's heartbeat, moving the name's dots from index `from` on. */
+  | { type: "beat"; on: boolean; from: number }
   | { type: "pulse"; x: number; y: number }
   /** Advance by dt and send positions back in `buffer` (transferred both ways). */
   | { type: "step"; dt: number; idle: boolean; buffer: ArrayBuffer };

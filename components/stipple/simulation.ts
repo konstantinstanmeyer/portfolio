@@ -7,7 +7,7 @@
 //   • while the pointer is held, accelerates toward the hold point; the pull
 //     grows with hold time and the home spring lets go, then returns on release.
 
-import type { ShapeField, StippleTargets } from "./stipple";
+import { EXTRA_GROUP, type ShapeField, type StippleTargets } from "./stipple";
 
 /** The parts of a build the simulation needs (no looks, no layout basis). */
 export type SimTargets = Pick<StippleTargets, "count" | "home" | "group" | "icons" | "iconField" | "blockHeight">;
@@ -168,6 +168,12 @@ const ICON_GRIP = 4;
 const ICON_GRIP_DAMP = Math.sqrt(ICON_GRIP);
 // While a title stands in for the name, its dots spring a little more tightly
 // so the swap feels responsive.
+// A heartbeat (e.g. while the About icon is hovered): the name swells about
+// its centre by up to BEAT_SCALE and settles, once per BEAT_PERIOD seconds,
+// fading in and out over BEAT_RAMP. The dots follow on their springs.
+const BEAT_SCALE = 0.05;
+const BEAT_PERIOD = 1.05;
+const BEAT_RAMP = 0.25;
 const TITLE_GRIP = 2.5;
 const TITLE_GRIP_DAMP = Math.sqrt(TITLE_GRIP);
 
@@ -251,6 +257,14 @@ export class ParticleField {
   private width = 1;
   private height = 1;
   private time = 0;
+  // The heartbeat: wanted or not, how far it has faded in, its phase, and the
+  // dots it moves (from this index on) and their centre.
+  private beatOn = false;
+  private beatLevel = 0;
+  private beatPhase = 0;
+  private beatFrom = 0;
+  private beatX = 0;
+  private beatY = 0;
   private gaussIndex = 0;
   private springWeight = 1;
   private reducedMotion = false;
@@ -361,6 +375,29 @@ export class ParticleField {
     this.dealStart = Math.random();
   }
 
+  /** Starts or stops the name's heartbeat; it moves the name's dots from index `from` on. */
+  setBeat(on: boolean, from = 0): void {
+    if (on && !this.beatOn) {
+      // About the centre of the dots it moves (their homes' bounding box).
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (let i = from; i < this.count; i++) {
+        if (this.group[i] !== 0) continue;
+        const x = this.home[i * 2];
+        const y = this.home[i * 2 + 1];
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+      if (x0 > x1) return;
+      this.beatX = (x0 + x1) / 2;
+      this.beatY = (y0 + y1) / 2;
+      if (this.beatLevel === 0) this.beatPhase = 0;
+    }
+    this.beatOn = on;
+    this.beatFrom = from;
+  }
+
   setReducedMotion(reduced: boolean): void {
     this.reducedMotion = reduced;
     if (reduced && this.entering) {
@@ -431,13 +468,14 @@ export class ParticleField {
       this.groupX[i + 1] = r.left + r.width / 2;
       this.groupY[i + 1] = r.top + r.height / 2;
     });
+    // Members of the name and of each icon (decoration dots are neither).
     const sizes = new Uint32Array(targets.icons.length + 1);
-    for (let i = 0; i < n; i++) sizes[targets.group[i]]++;
+    for (let i = 0; i < n; i++) if (targets.group[i] < sizes.length) sizes[targets.group[i]]++;
     this.members = Array.from(sizes, (size) => new Uint32Array(size));
     sizes.fill(0);
     for (let i = 0; i < n; i++) {
       const g = targets.group[i];
-      this.members[g][sizes[g]++] = i;
+      if (g < sizes.length) this.members[g][sizes[g]++] = i;
     }
     this.iconField = targets.iconField;
     this.flowHome = Float32Array.from(home);
@@ -449,7 +487,7 @@ export class ParticleField {
     const reach = (targets.icons[0]?.width ?? 0) * ICON_HOVER_SCATTER;
     for (let i = 0; i < n; i++) {
       const g = targets.group[i];
-      if (g === 0) continue;
+      if (g === 0 || g >= this.groupX.length) continue;
       const ox = home[i * 2] - this.groupX[g];
       const oy = home[i * 2 + 1] - this.groupY[g];
       const len = Math.sqrt(ox * ox + oy * oy) || 1;
@@ -460,6 +498,9 @@ export class ParticleField {
     }
     this.waveReach = (targets.icons[0]?.width ?? 0) * ICON_WAVE_REACH;
     this.hovered = 0;
+    // Like the hover, the heartbeat is set again for the new dots.
+    this.beatOn = false;
+    this.beatLevel = 0;
     this.titleHomes = [];
     this.stiffness = stiffness;
     this.damping = damping;
@@ -695,6 +736,20 @@ export class ParticleField {
     const ambient = !this.reducedMotion;
     if (ambient) this.sampleFlowGrid();
 
+    // The heartbeat's swell this step: a quick rise and a slower settle.
+    const beatWanted = this.beatOn && ambient ? 1 : 0;
+    if (this.beatLevel !== beatWanted) {
+      const stepBy = dt / BEAT_RAMP;
+      this.beatLevel = beatWanted ? Math.min(1, this.beatLevel + stepBy) : Math.max(0, this.beatLevel - stepBy);
+    }
+    let beat = 0;
+    if (this.beatLevel > 0) {
+      this.beatPhase = (this.beatPhase + dt / BEAT_PERIOD) % 1;
+      const swell = Math.pow(Math.sin(Math.PI * this.beatPhase), 4);
+      beat = BEAT_SCALE * swell * this.beatLevel;
+    }
+    const { beatFrom, beatX, beatY } = this;
+
     const hold = this.hold;
     if (hold.active) {
       hold.time += dt;
@@ -829,12 +884,18 @@ export class ParticleField {
       let ty = home[iy];
       let grip = 1;
       let gripDamp = 1;
-      if (owner === 0) {
+      // The name's dots, and the decoration's hidden ones, follow a title.
+      const named = owner === 0 || owner === EXTRA_GROUP;
+      if (named) {
         if (title) {
           tx = title[ix];
           ty = title[iy];
           grip = TITLE_GRIP;
           gripDamp = TITLE_GRIP_DAMP;
+        }
+        if (beat && i >= beatFrom) {
+          tx = beatX + (tx - beatX) * (1 + beat);
+          ty = beatY + (ty - beatY) * (1 + beat);
         }
       } else if (owner === hovered) {
         tx = groupX[owner] + (flowHome[ix] - groupX[owner]) * ICON_HOVER_SCALE + scatter[ix];
@@ -854,7 +915,7 @@ export class ParticleField {
       // the settle check so the loop can still go idle.
       let stirred = false;
       // Icons are links: they hold their shape under the cursor.
-      if (repel && owner === 0) {
+      if (repel && named) {
         const dx = x - p.x;
         const dy = y - p.y;
         const d2 = dx * dx + dy * dy;
@@ -905,7 +966,8 @@ export class ParticleField {
               sectorCount[ringSector[i]]--;
               this.ringTaken--;
             }
-          } else if (fromEdge < ringJoin && (role !== ROLE_FREE || or * or < catch2)) {
+          } else if (owner !== EXTRA_GROUP && fromEdge < ringJoin && (role !== ROLE_FREE || or * or < catch2)) {
+            // (Hidden decoration dots never make up the ring.)
             // Joiners take the slot where they already are, if its sector has room.
             let turn = Math.atan2(us, uc) / (2 * Math.PI);
             turn -= Math.floor(turn);

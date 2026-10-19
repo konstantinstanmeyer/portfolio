@@ -25,6 +25,8 @@ export interface Sim {
   holdStart(x: number, y: number): void;
   holdEnd(): void;
   hoverIcon(index: number | null): void;
+  /** Starts or stops the name's heartbeat (moving its dots from index `from` on). */
+  setBeat(on: boolean, from: number): void;
   pulse(x: number, y: number): void;
   /** Advance by dt. If the previous step is still running, dt carries over. */
   request(dt: number, idle: boolean): void;
@@ -70,6 +72,9 @@ class LocalSim implements Sim {
   }
   hoverIcon(index: number | null) {
     this.field.hoverIcon(index);
+  }
+  setBeat(on: boolean, from: number) {
+    this.field.setBeat(on, from);
   }
   pulse(x: number, y: number) {
     this.field.pulse(x, y);
@@ -165,6 +170,9 @@ class WorkerSim implements Sim {
   hoverIcon(index: number | null) {
     this.post({ type: "hover", index });
   }
+  setBeat(on: boolean, from: number) {
+    this.post({ type: "beat", on, from });
+  }
   pulse(x: number, y: number) {
     this.post({ type: "pulse", x, y });
   }
@@ -207,6 +215,7 @@ export function createSim(): Sim {
   const titles: Float32Array[] = [];
   let reduced = false;
   let hover: number | null = null;
+  let beat: [boolean, number] = [false, 0];
   // Whether any frame of the current targets was shown (if not, the intro can still play).
   let shown = false;
   let active: Sim;
@@ -217,6 +226,7 @@ export function createSim(): Sim {
     if (targets) active.setTargets(targets[0], targets[1], targets[2], shown ? "home" : targets[3]);
     titles.forEach((home, i) => home && active.setTitle(i, home));
     if (hover !== null) active.hoverIcon(hover);
+    active.setBeat(...beat);
   };
   try {
     active = new WorkerSim(fallback);
@@ -254,6 +264,10 @@ export function createSim(): Sim {
     hoverIcon(index) {
       hover = index;
       active.hoverIcon(index);
+    },
+    setBeat(on, from) {
+      beat = [on, from];
+      active.setBeat(on, from);
     },
     pulse: (x, y) => active.pulse(x, y),
     request: (dt, idle) => active.request(dt, idle),

@@ -1,19 +1,28 @@
 // Draws the dots: WebGL point sprites (soft round dots), with a Canvas 2D
 // fallback when WebGL is unavailable. Colours come from the active palette.
 
+import { reportRenderer } from "@/components/performance-notes";
 import { PALETTE, rgb, type Palette } from "./palette";
+
+/** How many titles can stand in for the name (one per icon). */
+export const MAX_TITLES = 4;
 
 export interface DotRenderer {
   kind: "webgl" | "2d";
   resize(width: number, height: number, dpr: number): void;
   setAttributes(attrs: Float32Array, count: number): void;
-  /** Per-dot [size, opacity] while title `index` (0–2) stands in for the name. */
+  /** Per-dot [size, opacity] while title `index` (below MAX_TITLES) stands in for the name. */
   setTitle(index: number, attrs: Float32Array, count: number): void;
   /** How far each title has faded in (0–1, summing to at most 1). */
   setMorph(weights: ArrayLike<number>): void;
   /** Draws `count` dots; with `pos` null, redraws the last positions. */
   draw(pos: Float32Array | null, count: number): void;
-  dispose(): void;
+  /**
+   * Frees the GPU resources. With `release`, the WebGL context itself is let
+   * go too (only for a canvas that won't be drawn on again: a lost context
+   * can't be taken up by a new renderer on the same canvas).
+   */
+  dispose(release?: boolean): void;
 }
 
 const VERTEX = `
@@ -22,7 +31,8 @@ attribute vec2 a_attr;
 attribute vec2 a_title0;
 attribute vec2 a_title1;
 attribute vec2 a_title2;
-uniform vec3 u_morph;
+attribute vec2 a_title3;
+uniform vec4 u_morph;
 uniform vec2 u_size;
 uniform float u_dpr;
 uniform float u_scale;
@@ -32,8 +42,8 @@ void main() {
   vec2 clip = a_pos / u_size * 2.0 - 1.0;
   gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
   // Crossfade each dot's look between the name and whichever titles are showing.
-  float base = max(0.0, 1.0 - u_morph.x - u_morph.y - u_morph.z);
-  vec2 attr = a_attr * base + a_title0 * u_morph.x + a_title1 * u_morph.y + a_title2 * u_morph.z;
+  float base = max(0.0, 1.0 - u_morph.x - u_morph.y - u_morph.z - u_morph.w);
+  vec2 attr = a_attr * base + a_title0 * u_morph.x + a_title1 * u_morph.y + a_title2 * u_morph.z + a_title3 * u_morph.w;
   v_px = attr.x * u_scale * u_dpr;
   gl_PointSize = v_px + 1.0;
   v_alpha = attr.y;
@@ -80,14 +90,14 @@ function createWebGLRenderer(canvas: HTMLCanvasElement, palette: Palette): DotRe
   const uSize = gl.getUniformLocation(program, "u_size");
   const uDpr = gl.getUniformLocation(program, "u_dpr");
   const uMorph = gl.getUniformLocation(program, "u_morph");
-  const aTitles = [0, 1, 2].map((k) => gl.getAttribLocation(program, `a_title${k}`));
+  const aTitles = Array.from({ length: MAX_TITLES }, (_, k) => gl.getAttribLocation(program, `a_title${k}`));
   const titleBuffers = aTitles.map(() => gl.createBuffer());
   // Until a title is built its weight stays 0, so a constant stands in.
   for (const loc of aTitles) {
     gl.disableVertexAttribArray(loc);
     gl.vertexAttrib2f(loc, 0, 0);
   }
-  gl.uniform3f(uMorph, 0, 0, 0);
+  gl.uniform4f(uMorph, 0, 0, 0, 0);
   const [paperR, paperG, paperB] = rgb(palette.paper);
   const [inkR, inkG, inkB] = rgb(palette.ink);
   gl.uniform3f(gl.getUniformLocation(program, "u_ink"), inkR, inkG, inkB);
@@ -138,7 +148,7 @@ function createWebGLRenderer(canvas: HTMLCanvasElement, palette: Palette): DotRe
       gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     },
     setMorph(weights) {
-      gl.uniform3f(uMorph, weights[0] ?? 0, weights[1] ?? 0, weights[2] ?? 0);
+      gl.uniform4f(uMorph, weights[0] ?? 0, weights[1] ?? 0, weights[2] ?? 0, weights[3] ?? 0);
     },
     draw(pos, count) {
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -148,11 +158,12 @@ function createWebGLRenderer(canvas: HTMLCanvasElement, palette: Palette): DotRe
       if (pos) gl.bufferSubData(gl.ARRAY_BUFFER, 0, pos.subarray(0, n * 2));
       gl.drawArrays(gl.POINTS, 0, n);
     },
-    dispose() {
+    dispose(release) {
       gl.deleteBuffer(posBuffer);
       gl.deleteBuffer(attrBuffer);
       for (const buffer of titleBuffers) gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
+      if (release) gl.getExtension("WEBGL_lose_context")?.loseContext();
     },
   };
 }
@@ -163,8 +174,8 @@ function createCanvasRenderer(canvas: HTMLCanvasElement, palette: Palette): DotR
   let attrs: Float32Array = new Float32Array(0);
   // Positions arrive in buffers that go back to the simulation, so keep a copy.
   let last: Float32Array = new Float32Array(0);
-  const titles: (Float32Array | null)[] = [null, null, null];
-  const morph = [0, 0, 0];
+  const titles: (Float32Array | null)[] = Array(MAX_TITLES).fill(null);
+  const morph: number[] = Array(MAX_TITLES).fill(0);
   let width = 0;
   let height = 0;
   const clear = () => {
@@ -187,7 +198,7 @@ function createCanvasRenderer(canvas: HTMLCanvasElement, palette: Palette): DotR
       titles[index] = next;
     },
     setMorph(weights) {
-      for (let k = 0; k < 3; k++) morph[k] = weights[k] ?? 0;
+      for (let k = 0; k < MAX_TITLES; k++) morph[k] = weights[k] ?? 0;
     },
     draw(next, count) {
       if (next) {
@@ -198,14 +209,15 @@ function createCanvasRenderer(canvas: HTMLCanvasElement, palette: Palette): DotR
       clear();
       // No per-dot opacity here: once a title mostly shows, skip its spare dots.
       let shown = -1;
-      for (let k = 0; k < 3; k++) if (morph[k] > 0.5) shown = k;
+      for (let k = 0; k < MAX_TITLES; k++) if (morph[k] > 0.5) shown = k;
       const title = shown >= 0 ? titles[shown] : null;
       // One path and one fill for every dot; per-dot opacity is dropped here.
       ctx.fillStyle = palette.ink;
       ctx.globalAlpha = 0.85 * palette.alpha;
       ctx.beginPath();
       for (let i = 0; i < count; i++) {
-        if (title && title[i * 2 + 1] === 0) continue;
+        // Hidden dots (spare title dots, the decoration's) have no opacity.
+        if ((title ? title[i * 2 + 1] : attrs[i * 2 + 1]) === 0) continue;
         // The size trim compensates for additive blending, which this path lacks.
         const s = attrs[i * 2] * (palette.additive ? 1 : palette.size);
         ctx.rect(pos[i * 2] - s / 2, pos[i * 2 + 1] - s / 2, s, s);
@@ -247,5 +259,7 @@ export function createDotRenderer(canvas: HTMLCanvasElement, palette: Palette = 
       // Fall through; the probe passed, so this is unexpected.
     }
   }
+  // No hardware graphics: fewer dots, drawn on the CPU. The visitor is told why.
+  reportRenderer("2d");
   return createCanvasRenderer(canvas, palette);
 }
