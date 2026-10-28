@@ -144,8 +144,7 @@
   background: var(--tone);
 }
 
-.portrait img,
-.photo img {
+.portrait img {
   display: block;
   width: 100%;
   height: auto;
@@ -283,8 +282,11 @@
   opacity: 1;
 }
 
-.open:focus-visible {
-  outline: none;
+/* The page's own ring is replaced by the one drawn on the photograph; this
+   transparent one only shows where the system forces colours. */
+.root .open:focus-visible {
+  outline: 1.5px solid transparent;
+  outline-offset: -1.5px;
 }
 
 /* The keyboard's ring sits on the photograph: ink, with a paper edge inside. */
@@ -444,7 +446,7 @@
   padding: 11px 14px;
   border: 1px solid var(--ink-2);
   border-radius: 0;
-  background: color-mix(in oklch, var(--ink) 3%, var(--paper));
+  background: color-mix(in oklch, var(--ink) 6%, var(--paper));
   color: var(--ink);
   font: inherit;
   letter-spacing: inherit;
@@ -472,9 +474,10 @@
   }
 }
 
+/* A transparent outline, so forced colours still draw a focus ring. */
 .field input:focus,
 .field textarea:focus {
-  outline: none;
+  outline: 1px solid transparent;
   border-color: var(--ink);
   box-shadow: 0 0 0 1px var(--ink);
 }
@@ -532,9 +535,13 @@
   outline-offset: 3px;
 }
 
-.send button:disabled {
+.send button[aria-disabled="true"] {
   cursor: progress;
   opacity: 0.6;
+}
+
+.status:focus {
+  outline: none;
 }
 
 /* Out of sight and out of reach, for bots alone. */
@@ -678,7 +685,6 @@
   /* The text's echo is the text again, kept out of the accessible name. */
   .name::after,
   .line::after {
-    content: attr(data-text);
     content: attr(data-text) / "";
     position: absolute;
     inset: 0;
@@ -847,48 +853,59 @@
   --k: 7;
 }
 
-.root[data-space="on"] [data-plane] {
-  transform:
-    perspective(1100px)
-    translate3d(0, calc(var(--d, 0) * 48px * var(--amp)), calc(var(--ad, 0) * -320px * var(--amp)))
-    rotateX(calc((var(--d, 0) * -24deg + var(--v, 0) * 6deg) * var(--amp)))
-    rotateY(calc(var(--ax, 0) * 3deg));
-  translate: calc(var(--ax, 0) * var(--k, -2) * 1px) calc(var(--ay, 0) * var(--k, -2) * 0.6px);
+/* How far a plane is pulled sharp by the pointer or keyboard, 0 to 1.
+   Transitioned on its own, so neither the scroll's depth (already eased by
+   Space.tsx) nor the rack on load is ever held up by a transition. */
+@property --sharp {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
 }
 
-/* Softness: the plane's depth, plus the rack on load. Not waiting on the
-   script, so the opening frame is already out of focus at first paint. */
+/* All of it only while motion is welcome: switching reduced motion on mid-
+   visit stills the page at once. */
 @media (prefers-reduced-motion: no-preference) {
+  .root[data-space] [data-plane] {
+    transform:
+      perspective(1100px)
+      translate3d(0, calc(var(--d, 0) * 48px * var(--amp)), calc(var(--ad, 0) * -320px * var(--amp)))
+      rotateX(calc((var(--d, 0) * -24deg + var(--v, 0) * 6deg) * var(--amp)))
+      rotateY(calc(var(--ax, 0) * 3deg));
+    translate: calc(var(--ax, 0) * var(--k, -2) * 1px) calc(var(--ay, 0) * var(--k, -2) * 0.6px);
+  }
+
+  /* Measured flat, so a plane's tilt never moves where it is measured to be. */
+  .root[data-measuring] [data-plane] {
+    transform: none;
+    translate: none;
+  }
+
+  /* Softness: the plane's depth, plus the rack on load, less any pull.
+     Not waiting on the script, so the opening frame is already out of focus
+     at first paint. */
   .root [data-plane] {
-    filter: blur(calc(min(var(--ad, 0) * 8px, 3.4px) + var(--rack) * 5px));
+    filter: blur(calc((min(var(--ad, 0) * 8px, 3.4px) + var(--rack) * 5px) * (1 - var(--sharp))));
+    transition: --sharp 260ms var(--ease-morph);
   }
 
-  /* The portrait moves through the space with everything else, but stays sharp. */
-  .root .portrait {
+  /* The portrait, and the form, move through the space with everything
+     else but are never softened: a face, and fields you need to find. */
+  .root .portrait,
+  .root .write {
     filter: none;
   }
-}
 
-/* Tap to focus: whatever the pointer rests on, or keyboard focus is inside,
-   is pulled sharp, wherever it is in the space. */
-.root[data-space="on"] [data-plane] {
-  transition: filter 260ms var(--ease-morph);
-}
-
-.root[data-space="on"] [data-plane]:focus-within {
-  filter: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .root[data-space="on"] [data-plane]:hover {
-    filter: none;
+  /* Tap to focus: whatever the pointer rests on, or keyboard focus is
+     inside, is pulled sharp, wherever it is in the space. */
+  .root [data-plane]:focus-within {
+    --sharp: 1;
   }
-}
 
-/* Measured flat, so a plane's tilt never moves where it is measured to be. */
-.root[data-space="measuring"] [data-plane] {
-  transform: none;
-  translate: none;
+  @media (hover: hover) and (pointer: fine) {
+    .root [data-plane]:hover {
+      --sharp: 1;
+    }
+  }
 }
 
 @media (max-width: 959.98px) {

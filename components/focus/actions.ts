@@ -20,25 +20,47 @@ import { LIMITS, type Field, type Sent, type Values } from "./message";
 // Faster than this from opening the page to sending, it was not typed.
 const QUICKEST_MS = 2500;
 
-// Five messages per address per ten minutes. Kept in this server's memory,
-// so on a host that runs several instances it is a floor, not a guarantee.
+// Five messages per sender per ten minutes, and fifty from everyone, so a
+// sender who disguises where they are can still never flood the inbox or
+// spend the sending quota. Kept in this server's memory, so on a host that
+// runs several instances it is a floor, not a guarantee.
 const WINDOW_MS = 10 * 60 * 1000;
-const PER_WINDOW = 5;
+const PER_SENDER = 5;
+const PER_WINDOW = 50;
+// Senders remembered at most; past this the longest-quiet are forgotten.
+const SENDERS = 2000;
 const recent = new Map<string, number[]>();
+let everyone: number[] = [];
 
 function limited(who: string, now: number) {
+  everyone = everyone.filter((t) => now - t < WINDOW_MS);
   const times = (recent.get(who) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (times.length >= PER_WINDOW) {
-    recent.set(who, times);
-    return true;
-  }
+  if (times.length >= PER_SENDER || everyone.length >= PER_WINDOW) return true;
   times.push(now);
+  everyone.push(now);
+  // Moved to the end, so the map runs from longest-quiet to latest.
+  recent.delete(who);
   recent.set(who, times);
-  // Forget the quiet ones now and then, so the map never grows without end.
-  if (recent.size > 5000) {
-    for (const [key, list] of recent) if (!list.some((t) => now - t < WINDOW_MS)) recent.delete(key);
-  }
+  while (recent.size > SENDERS) recent.delete(recent.keys().next().value!);
   return false;
+}
+
+/**
+ * Who sent it, from a header the host sets and a sender cannot: on Vercel,
+ * its own; elsewhere, the address the nearest proxy appended last. With no
+ * proxy at all (a bare `next start`) every header is the sender's own word,
+ * and only the overall ceiling holds.
+ */
+function sender(request: Awaited<ReturnType<typeof headers>>) {
+  if (process.env.VERCEL) return request.get("x-real-ip") || "unknown";
+  return request.get("x-forwarded-for")?.split(",").at(-1)?.trim() || "unknown";
+}
+
+// A bot's message: told it worked, and dropped, with a line in the log so
+// a person caught by mistake would show up there.
+function trapped(by: string): Sent {
+  console.info(`[contact] Dropped a message as a bot's (${by}).`);
+  return { status: "sent" };
 }
 
 const text = (data: FormData, key: string) => {
@@ -52,20 +74,19 @@ export async function sendMessage(_: Sent, data: FormData): Promise<Sent> {
   const now = Date.now();
 
   // The honeypot, and the stopwatch: a bot that fills the hidden field, or
-  // sends within moments of loading the page, is told it worked and dropped.
-  // The stopwatch is set by the page's script, so it only judges browsers
-  // that ran it; without one, the honeypot alone decides.
-  if (text(data, "website") !== "") return { status: "sent" };
-  const opened = text(data, "opened");
-  if (opened !== "") {
-    const at = Number(opened);
-    if (!Number.isFinite(at) || now - at < QUICKEST_MS) return { status: "sent" };
-  }
+  // sends within moments of the page opening, is caught. The stopwatch is
+  // the browser's own count from opening to sending, so no two clocks need
+  // agree; without the page's script there is none, and the honeypot alone
+  // decides.
+  if (text(data, "website") !== "") return trapped("honeypot");
+  const elapsed = text(data, "elapsed");
+  if (elapsed !== "" && !(Number(elapsed) >= QUICKEST_MS)) return trapped("too quick");
 
   const values: Values = {
     name: text(data, "name").trim().slice(0, LIMITS.name),
     email: text(data, "email").trim().slice(0, LIMITS.email),
-    message: text(data, "message").trim(),
+    // Line breaks as the browser counts them, one character each.
+    message: text(data, "message").replace(/\r\n?/g, "\n").trim(),
   };
 
   const errors: Partial<Record<Field, string>> = {};
@@ -76,9 +97,7 @@ export async function sendMessage(_: Sent, data: FormData): Promise<Sent> {
     errors.message = `Keep it under ${LIMITS.message.toLocaleString("en-US")} characters.`;
   if (Object.keys(errors).length) return { status: "invalid", errors, values };
 
-  const request = await headers();
-  const who = request.get("x-forwarded-for")?.split(",")[0]?.trim() || request.get("x-real-ip") || "unknown";
-  if (limited(who, now)) return { status: "busy", values };
+  if (limited(sender(await headers()), now)) return { status: "busy", values };
 
   const to = process.env.CONTACT_TO ?? "";
   const from = process.env.CONTACT_FROM;

@@ -37,13 +37,14 @@ export function Space() {
     // The scroll at which each plane is sharpest.
     let sharpAt: number[] = [];
     const measure = () => {
-      root.dataset.space = "measuring";
+      root.dataset.measuring = "";
       height = window.innerHeight;
       const end = Math.max(0, document.documentElement.scrollHeight - height);
       sharpAt = planes.map((el) => {
         const r = el.getBoundingClientRect();
         return clamp(r.top + window.scrollY + r.height / 2 - FOCUS * height, 0, end);
       });
+      delete root.dataset.measuring;
       root.dataset.space = "on";
     };
 
@@ -105,6 +106,7 @@ export function Space() {
       document.removeEventListener("focusin", wake);
       document.removeEventListener("focusout", wake);
       delete root.dataset.space;
+      delete root.dataset.measuring;
     };
   }, []);
 
