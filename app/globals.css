@@ -2,24 +2,20 @@
 
 @theme inline {
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  /* --paper / --ink are set on <html> from the active palette in
-     components/stipple/palette.ts (see app/layout.tsx). */
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
 }
 
-html,
-body {
-  background: var(--paper);
-  color: var(--ink);
-  overscroll-behavior: none;
+::selection {
+  background: var(--color-neutral-200);
 }
 
-/* The performance notice (components/PerformanceNotice.tsx) fades in. */
-@keyframes notice-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
+@media (prefers-color-scheme: dark) {
+  ::selection {
+    background: var(--color-neutral-700);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
   }
 }
