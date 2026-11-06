@@ -4,7 +4,7 @@ import "./globals.css";
 // Each page brings its own type: the home page Inter, the drafts their own.
 export const metadata: Metadata = {
   title: "Konstantin Stanmeyer",
-  description: "Founder and head of marketing at Myrtle Street Media. Developer and photographer in Boston.",
+  description: "Building and designing at Myrtle Street Media. Developer and photographer in Boston.",
 };
 
 export const viewport: Viewport = {

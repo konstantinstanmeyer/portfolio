@@ -5,10 +5,11 @@ import { sendMessage } from "./actions";
 import { LIMITS, type Field, type Sent, type Values } from "./message";
 import s from "./focus.module.css";
 
-const FIELDS: { name: Field; label: string; autoComplete: string; type?: string }[] = [
-  { name: "name", label: "Name", autoComplete: "name" },
-  { name: "email", label: "Email", autoComplete: "email", type: "email" },
-  { name: "message", label: "Message", autoComplete: "off" },
+// Each with a hint, in its field, of what goes there.
+const FIELDS: { name: Field; label: string; hint: string; autoComplete: string; type?: string }[] = [
+  { name: "name", label: "Name", hint: "Your name", autoComplete: "name" },
+  { name: "email", label: "Email", hint: "you@example.com", autoComplete: "email", type: "email" },
+  { name: "message", label: "Message", hint: "A few lines are plenty.", autoComplete: "off" },
 ];
 
 // What was written, kept for this tab until it is sent, so neither a failed
@@ -85,7 +86,9 @@ function Letter({ failed }: { failed: boolean }) {
       : state.status === "busy"
         ? "That’s a few in a row. Try again in a little while."
         : state.status === "failed"
-          ? `It didn’t go through. Write to ${state.write} instead.`
+          ? state.write
+            ? `It didn’t go through. Write to ${state.write} instead.`
+            : "It didn’t go through. Try again in a little while; what you wrote is kept."
           : failed
             ? "That didn’t go through. Check your connection and send it again, or reload the page; what you wrote is kept."
             : null;
@@ -109,13 +112,14 @@ function Letter({ failed }: { failed: boolean }) {
         } catch {}
       }}
     >
-      {FIELDS.map(({ name, label, autoComplete, type }) => {
+      {FIELDS.map(({ name, label, hint, autoComplete, type }) => {
         const id = `message-${name}`;
         const error = errors[name];
         const props = {
           id,
           name,
           autoComplete,
+          placeholder: hint,
           required: true,
           maxLength: LIMITS[name],
           defaultValue: values?.[name],

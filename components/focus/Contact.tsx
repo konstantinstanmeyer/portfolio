@@ -199,7 +199,7 @@ export function Contact({ frames }: { frames: Frame[] }) {
 
   return (
     <>
-      <ol className={s.sheet} ref={sheet} data-plane="">
+      <ol className={s.sheet} ref={sheet} data-plane="" data-sheet="">
         {frames.map(({ src, alt }, i) => (
           <li className={s.tile} key={src.src} data-tile="">
             {/* A link to the full photograph, opened in place when scripts run. */}

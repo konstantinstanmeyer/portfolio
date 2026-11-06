@@ -2,13 +2,15 @@ import type { Metadata, Viewport } from "next";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { Fragment_Mono, Inter } from "next/font/google";
-import portrait from "@/public/KonstantinPortrait.webp";
+import portrait from "@/public/konstantin-portrait.webp";
 import { PHOTOGRAPHS } from "@/app/photographs";
 import { Coincidence } from "@/components/focus/Coincidence";
 import { Contact } from "@/components/focus/Contact";
+import { Ground } from "@/components/focus/Ground";
 import { MessageForm } from "@/components/focus/MessageForm";
 import { Parallax } from "@/components/focus/Parallax";
 import { Space } from "@/components/focus/Space";
+import { Spill } from "@/components/focus/Spill";
 import s from "@/components/focus/focus.module.css";
 
 const inter = Inter({
@@ -27,7 +29,7 @@ const mono = Fragment_Mono({
 
 export const metadata: Metadata = {
   title: "Konstantin Stanmeyer",
-  description: "Founder and head of marketing at Myrtle Street Media. Developer and photographer in Boston.",
+  description: "Building and designing at Myrtle Street Media. Developer and photographer in Boston.",
 };
 
 export const viewport: Viewport = {
@@ -39,7 +41,7 @@ export const viewport: Viewport = {
 };
 
 const NAME = "Konstantin Stanmeyer";
-const LINE = "Founder and head of marketing at Myrtle Street Media.";
+const LINE = "Building and designing at Myrtle Street Media.";
 
 // Elsewhere, in the footer: the bio itself carries no links.
 const LINKS = [
@@ -48,7 +50,21 @@ const LINKS = [
 ];
 
 // Twenty frames for the sheet, five by four: the ones that still read when small.
-const FRAMES = [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 17, 18, 20, 22, 25, 27].map((i) => PHOTOGRAPHS[i]);
+const PICKS = [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 17, 18, 20, 22, 25, 27];
+const FRAMES = PICKS.map((i) => PHOTOGRAPHS[i]);
+
+// The sheet in miniature, by the line: each frame as its tone, five across.
+// Two are too dark to read as frames at that size, so they are lifted: the
+// black and white one to a slightly lighter grey, and the market to the
+// maroon of its red umbrellas.
+const LIFTED: Record<number, string> = { 7: "#3e3e3e", 17: "#672f39" };
+const INDEX = PICKS.map((i) => LIFTED[i] ?? PHOTOGRAPHS[i].tone);
+
+// When each cell of the miniature appears on load, in ms, by its place on the
+// sheet. The order is fixed but reads as shuffled: no cell follows a
+// neighbour, none follow in a line, no row or column fills ahead of the rest,
+// and the intervals between them are uneven.
+const REVEAL = [555, 265, 480, 750, 365, 435, 780, 850, 605, 250, 640, 540, 300, 400, 825, 315, 455, 695, 200, 520];
 
 // The loading placeholder: a flat tone (ink at 6% into paper) that follows the
 // colour scheme, in place of a blurred preview.
@@ -72,7 +88,7 @@ export default function Home() {
               className={`${s.grid} ${s.hero}`}
               style={{ "--portrait": (portrait.height / portrait.width).toFixed(4) } as CSSProperties}
             >
-              <div className={s.portrait} data-plane="">
+              <div className={s.portrait} data-plane="" data-rest="">
                 <Image
                   src={portrait}
                   alt="Konstantin Stanmeyer in low light, a band of warm sunlight falling across one eye."
@@ -82,13 +98,23 @@ export default function Home() {
                   sizes="(min-width: 1440px) 216px, (min-width: 960px) calc(14.4vw - 20px), clamp(144px, 42vw, 216px)"
                 />
               </div>
-              <div className={s.intro} data-plane="">
+              <div className={s.intro} data-plane="" data-rest="">
                 {/* data-text is each line's echo: the second image that shrinks onto it on load. */}
                 <h1 className={s.name} data-text={NAME}>
                   {NAME}
                 </h1>
                 <p className={s.line} data-text={LINE}>
                   {LINE}
+                </p>
+                {/* What the photographs are, said once and quietly, beside the sheet in
+                    miniature (INDEX). */}
+                <p className={s.note}>
+                  <span className={s.index} aria-hidden="true">
+                    {INDEX.map((tone, i) => (
+                      <i key={i} style={{ background: tone, "--at": `${REVEAL[i]}ms` } as CSSProperties} />
+                    ))}
+                  </span>
+                  Photography from the off-hours
                 </p>
               </div>
             </header>
@@ -100,16 +126,23 @@ export default function Home() {
               </h2>
               <div className={s.text} data-plane="">
                 <p>
-                  I build for people I believe in, and I keep the work within their reach: fairly priced, simple to
-                  run, usable by anyone. At Myrtle Street Media that means websites for local businesses, and making
-                  sure people find them.
+                  The part of this work that matters most happens after it ships, for people who will never know who
+                  built it: someone finding the hours on a slow phone, booking on the first try, reading the menu with
+                  a screen reader, then getting on with their day. The business behind it should be able to afford
+                  that, and to keep it running without calling anyone.
                 </p>
                 <p>
-                  There have never been more good tools to build with, and they keep getting cheaper. Clients should
-                  see that in what they pay and in how much we can do for them. All of this should be getting easier,
-                  not more expensive and more tangled.
+                  Better tools have made that easier to give. The routine parts of programming and design take minutes
+                  now instead of days, leaving the time for what still needs a person: deciding what&rsquo;s worth
+                  building, who it&rsquo;s for, and making sure everyone can use it. Accessibility used to be the first
+                  thing cut when time or money ran short; now there&rsquo;s room for it. At Myrtle Street Media, that
+                  means websites for local businesses that cost less, do more, and work for anyone who visits them.
                 </p>
-                <p>I&rsquo;m a developer in Boston. Before I wrote any code, I was taking photographs.</p>
+                <p>
+                  Before the code came photographs, mostly of strangers, mostly in the second after they forgot about
+                  the camera: good practice, it turns out, for building things meant to be used without a second
+                  thought. Based in Boston.
+                </p>
               </div>
             </section>
           </div>
@@ -125,7 +158,7 @@ export default function Home() {
           {/* One plane, so the question and the form come into focus together. */}
           <section className={`${s.grid} ${s.write}`} id="contact" aria-labelledby="contact-heading" data-plane="">
             <h2 className={s.ask} id="contact-heading" data-focus="">
-              Tell me what you&rsquo;re working on.
+              Tell me what you&rsquo;re working on, <span className={s.aside}>or thinking about.</span>
             </h2>
             <div className={s.letter}>
               <MessageForm />
@@ -134,7 +167,8 @@ export default function Home() {
         </main>
 
         <footer className={`${s.grid} ${s.footer}`}>
-          <div className={s.links} data-focus="" data-plane="">
+          {/* data-column: the type's column, edge to edge, which the ground's figures stand a gutter clear of. */}
+          <div className={s.links} data-focus="" data-plane="" data-column="">
             <span className={s.elsewhere}>
               {LINKS.map(({ href, label }) => (
                 <a key={href} href={href}>
@@ -150,6 +184,8 @@ export default function Home() {
       <Coincidence />
       <Parallax />
       <Space />
+      <Ground />
+      <Spill tones={FRAMES.map((f) => f.tone)} />
     </div>
   );
 }

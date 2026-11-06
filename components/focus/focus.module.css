@@ -6,19 +6,29 @@
 
 /* ---------- ground ---------- */
 
-/* Tokens are written out per scheme: ink-2 is ink 58% of the way into paper
-   (4.9:1, the lightest grey any word is set in), ink-3 is 30% (decoration
+/* Tokens are written out per scheme: ink-2 is the lightest grey any word is
+   set in (5.3:1 on the paper, and still 4.5:1 or more on the ground's
+   strongest light), ink-3 is ink 30% of the way into paper (decoration
    only), tone is 6% (the image placeholder). The ghost is ink at 28%, 32% on
    dark, and nothing else: a real finder's patch is often amber, but colour
-   here would read as an RGB split. */
+   here would read as an RGB split. The page's one colour lives in defocus
+   instead (the secondary spectrum, in "the space"): symmetric, on soft type
+   only, never on a ghost alone. */
 :global(html):has(.root) {
   color-scheme: light dark;
   --paper: oklch(98.4% 0.003 85); /* #fbfaf7 */
   --ink: oklch(21% 0.006 85); /* #1a1815, 16.9:1 */
-  --ink-2: oklch(53.5% 0.0047 85); /* #6e6d6a, 4.9:1 */
+  --ink-2: oklch(52% 0.0047 85); /* #6a6966, 5.3:1 */
   --ink-3: oklch(75.2% 0.0039 85); /* #afaeac */
   --tone: oklch(93.8% 0.0032 85); /* #ebeae8 */
   --ghost: oklch(21% 0.006 85 / 0.28);
+  /* The secondary spectrum: magenta in front of focus, green behind. The
+     spread is the fringe's radius per pixel of blur; max, its opacity at
+     full blur. */
+  --fringe-near: oklch(55% 0.19 335);
+  --fringe-far: oklch(58% 0.13 172);
+  --fringe-spread: 0.45;
+  --fringe-max: 0.9;
   background: var(--paper);
   color: var(--ink);
   scrollbar-gutter: stable;
@@ -28,10 +38,16 @@
   :global(html):has(.root) {
     --paper: oklch(17% 0.004 85); /* #100f0d */
     --ink: oklch(92% 0.004 85); /* #e6e4e2, 15.1:1 */
-    --ink-2: oklch(60.5% 0.004 85); /* #83817f, 4.9:1 */
+    --ink-2: oklch(62.5% 0.004 85); /* #898785, 5.4:1 */
     --ink-3: oklch(39.5% 0.004 85); /* #474644 */
     --tone: oklch(21.5% 0.004 85); /* #1a1917 */
     --ghost: oklch(92% 0.004 85 / 0.32);
+    /* Light ink on dark paper shows the fringe as a rim, so it is kept
+       narrower and paler here, short of a glow. */
+    --fringe-near: oklch(70% 0.15 340);
+    --fringe-far: oklch(78% 0.09 178);
+    --fringe-spread: 0.55;
+    --fringe-max: 0.95;
   }
 }
 
@@ -77,7 +93,6 @@
 }
 
 .name,
-.line,
 .ask {
   font-size: 32px;
   line-height: 36px;
@@ -89,6 +104,17 @@
   font-weight: 500;
 }
 
+/* The line under the name: smaller, and set heavier, so it holds its own
+   beside the name at a little over half its size. */
+.line {
+  margin-top: 10px;
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: -0.012em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
 .count,
 .controls {
   font-family: var(--f-mono), ui-monospace, monospace;
@@ -97,6 +123,53 @@
   letter-spacing: 0.02em;
   font-weight: 400;
   color: var(--ink-2);
+}
+
+/* ---------- the light ---------- */
+
+/* The photographs' light, out of focus (Spill.tsx): one fixed canvas under
+   everything on the page and over the paper itself. Its coarse bitmap is
+   scaled up smoothly, which is all a light this soft needs. */
+.root {
+  isolation: isolate;
+}
+
+.spill {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Only where the colour of soft type shows too, and hidden the moment any
+   of these changes mid-visit. */
+@media (prefers-reduced-motion: no-preference) and (prefers-contrast: no-preference) and (not (forced-colors: active)) {
+  .spill {
+    display: block;
+  }
+}
+
+/* The ground (Ground.tsx): two great hairline circles far behind the page,
+   their second images racking into coincidence. Under the photographs'
+   light and over the paper; drawn out from nothing on load, so it needs no
+   fade of its own. */
+.ground {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@media (prefers-contrast: no-preference) and (not (forced-colors: active)) {
+  .ground {
+    display: block;
+  }
 }
 
 /* ---------- grid ---------- */
@@ -117,14 +190,15 @@
 
 /* ---------- the opening frame ---------- */
 
-/* Exactly one frame tall (or taller, if it must be): the header on the focus
-   line, the About resting near the bottom edge, the photographs below the fold. */
+/* The header on the focus line, then the About, then the photographs, one
+   even interval apart (--interval): above the About, its margin; below it,
+   this padding and the photographs' margin. */
+.root {
+  --interval: 192px;
+}
+
 .opening {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 100svh;
-  padding-bottom: 96px;
+  padding-bottom: calc(var(--interval) / 2);
 }
 
 /* ---------- header: portrait, name, line ---------- */
@@ -151,8 +225,46 @@
 }
 
 .intro {
+  position: relative;
   grid-column: 5 / -1;
   align-self: end;
+}
+
+/* A caption under the line. It hangs below the focus line, so the name and
+   line keep their place on it, and opens with the contact sheet in
+   miniature: twenty cells of colour, edge to edge, 3:2 like the frames. */
+.note {
+  position: absolute;
+  top: calc(100% + 16px);
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.index {
+  display: grid;
+  grid-template-columns: repeat(5, 6px);
+  grid-auto-rows: 4px;
+  flex: none;
+}
+
+/* On load the cells arrive one by one, in no order, as the sheet's
+   photographs resolve: from just after the page opens, ahead of the
+   figures in the ground. --at, each cell's moment, is set in the page. */
+@media (prefers-reduced-motion: no-preference) {
+  .index i {
+    animation: cell 1ms steps(1) backwards;
+    animation-delay: var(--at);
+  }
+}
+
+@keyframes cell {
+  from {
+    opacity: 0;
+  }
 }
 
 .name,
@@ -172,7 +284,7 @@
 /* ---------- about ---------- */
 
 .about {
-  margin-top: 126px;
+  margin-top: var(--interval);
   align-items: baseline;
 }
 
@@ -201,7 +313,7 @@
 /* ---------- photography ---------- */
 
 .photography {
-  margin-top: 96px;
+  margin-top: calc(var(--interval) / 2);
   scroll-margin-top: 96px;
 }
 
@@ -421,123 +533,190 @@
   grid-column: 5 / -1;
 }
 
+/* The second thought, said a little more quietly. */
+.aside {
+  opacity: 0.6;
+}
+
+/* As wide as the photographs, so its rules end where the sheet does. */
 .letter {
-  grid-column: 5 / span 5;
+  grid-column: 5 / span 7;
   margin-top: 48px;
 }
 
+/* Ruled like the margin of a contact sheet: a row to each field between
+   hairlines, its name in a column one frame wide, and beside it a soft
+   panel (--well) where it is written, with a hint of what goes there, so
+   where to write is plain at a glance. The rules are the lightest grey any
+   word is set in (4.5:1 or more); under the pointer, or written in, the
+   panel deepens and its rule turns to ink. */
 .form {
+  --label: max(20%, 6em);
+  --well: var(--tone);
+  --well-on: color-mix(in oklch, var(--ink) 10%, var(--paper));
+  border-top: 1px solid var(--ink-2);
+}
+
+.field,
+.send {
   display: grid;
-  gap: 24px;
+  grid-template-columns: var(--label) minmax(0, 1fr);
+  align-items: start;
 }
 
-.field label {
-  display: block;
-  margin-bottom: 8px;
-}
-
-/* Boxes you can see at a glance: a mid-grey edge (4.9:1 on the paper), a
-   faint fill, and full ink when focused. */
-.field input,
-.field textarea {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: 11px 14px;
-  border: 1px solid var(--ink-2);
-  border-radius: 0;
-  background: color-mix(in oklch, var(--ink) 6%, var(--paper));
-  color: var(--ink);
-  font: inherit;
-  letter-spacing: inherit;
+.field {
+  position: relative;
+  border-bottom: 1px solid var(--ink-2);
+  cursor: text;
   transition:
     border-color 160ms var(--ease-morph),
     box-shadow 160ms var(--ease-morph);
 }
 
-.field input {
-  min-height: 44px;
+.field label {
+  padding: 14px 16px 14px 0;
+  cursor: text;
+}
+
+/* The whole row answers a click, not only the words in it. */
+.field label::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.field input,
+.field textarea {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--well);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: inherit;
+  transition: background-color 160ms var(--ease-morph);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ink-2);
+  opacity: 1;
 }
 
 /* Grows with what is written, from five lines to most of a frame. */
 .field textarea {
-  min-height: calc(5 * 21px + 24px);
+  min-height: calc(5 * 21px + 28px);
   max-height: 60svh;
   field-sizing: content;
-  resize: vertical;
+  resize: none;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .field input:hover,
-  .field textarea:hover {
-    border-color: var(--ink);
+@supports not (field-sizing: content) {
+  .field textarea {
+    resize: vertical;
   }
 }
 
-/* A transparent outline, so forced colours still draw a focus ring. */
+/* A phone zooms in on type smaller than this. */
+@media (pointer: coarse) {
+  .field input,
+  .field textarea {
+    font-size: 16px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .field:hover {
+    border-bottom-color: var(--ink);
+  }
+
+  .field:hover input,
+  .field:hover textarea {
+    background: var(--well-on);
+  }
+}
+
+.field input:focus,
+.field textarea:focus {
+  background: var(--well-on);
+}
+
+.field:focus-within,
+.field:has([aria-invalid="true"]) {
+  border-bottom-color: var(--ink);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+/* The row's rule is the ring; this transparent one only shows where the
+   system forces colours. */
 .field input:focus,
 .field textarea:focus {
   outline: 1px solid transparent;
-  border-color: var(--ink);
-  box-shadow: 0 0 0 1px var(--ink);
-}
-
-.field [aria-invalid="true"] {
-  border-color: var(--ink);
-  box-shadow: 0 0 0 1px var(--ink);
 }
 
 /* The browser's autofill colours, held off. */
 .field input:-webkit-autofill {
   -webkit-text-fill-color: var(--ink);
   caret-color: var(--ink);
-  transition:
-    border-color 160ms var(--ease-morph),
-    box-shadow 160ms var(--ease-morph),
-    background-color 600000s 0s;
+  transition: background-color 600000s 0s;
 }
 
 .error {
-  margin-top: 8px;
+  grid-column: 2;
+  padding: 8px 16px 14px;
 }
 
+/* Sending is the last word in the column of names; what came of it, beside it. */
 .send {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 24px;
+  padding-top: 4px;
 }
 
 .send button {
+  justify-self: start;
   min-height: 44px;
-  padding: 0 28px;
-  border: 1px solid var(--ink);
+  padding: 0;
+  border: 0;
   border-radius: 0;
-  background: var(--ink);
-  color: var(--paper);
+  background: none;
+  color: var(--ink);
   font: inherit;
   letter-spacing: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--ink-3);
+  text-underline-offset: 0.22em;
   cursor: pointer;
-  transition:
-    background-color 160ms var(--ease-morph),
-    color 160ms var(--ease-morph);
+  transition: text-decoration-color 0.18s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .send button:hover {
-    background: transparent;
-    color: var(--ink);
+    text-decoration-color: currentColor;
   }
 }
 
+.send button:active {
+  opacity: 0.7;
+}
+
 .send button:focus-visible {
-  outline: 1.5px solid var(--ink);
+  outline: 1.5px solid currentColor;
   outline-offset: 3px;
+  border-radius: 2px;
 }
 
 .send button[aria-disabled="true"] {
   cursor: progress;
   opacity: 0.6;
+}
+
+.status {
+  padding-block: 11.5px;
 }
 
 .status:focus {
@@ -717,60 +896,104 @@
 @media (max-width: 959.98px) {
   .root {
     --m: clamp(24px, 6.25vw, 64px);
+    --interval: 160px;
   }
 
   .grid {
     display: block;
   }
 
+  /* The opening, centred: the portrait, and the name and line under it,
+     the portrait as far from the top of the frame as from either side, up
+     to a sixth of the frame's height, so a tablet's wider margins never
+     push it down the page. */
   .hero {
-    padding-top: 72px;
+    --photo: clamp(144px, 42vw, 216px);
+    padding-top: max(72px, min(calc((100cqw - var(--photo)) / 2), 16svh));
+    text-align: center;
   }
 
   .portrait {
-    width: clamp(144px, 42vw, 216px);
+    width: var(--photo);
+    margin-inline: auto;
   }
 
   .intro {
     margin-top: 32px;
   }
 
-  /* A phone on its side: the portrait beside the name, as on a desktop. */
+  /* Centred under the line: the miniature over its caption. */
+  .note {
+    position: static;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+    white-space: normal;
+  }
+
+  .name,
+  .line {
+    margin-inline: auto;
+  }
+
+  /* The line in two, under the name, so the opening stays one narrow
+     column: the figures either side of it can come in close. */
+  .line {
+    max-width: 17em;
+  }
+
+  /* A phone on its side: the portrait beside the name, as on a desktop, the
+     pair centred across the frame and down it. */
   @media (min-aspect-ratio: 4 / 3) {
     .hero {
+      --photo: min(216px, calc(56svh / var(--portrait)));
+      padding-top: max(72px, calc((100svh - var(--photo) * var(--portrait)) / 2));
       display: flex;
+      justify-content: center;
       align-items: flex-end;
       gap: 48px;
+      text-align: start;
     }
 
     .portrait {
       flex: none;
-      width: min(216px, calc(56svh / var(--portrait)));
+      margin-inline: 0;
     }
 
     .intro {
       margin-top: 0;
     }
+
+    .name,
+    .line {
+      margin-inline: 0;
+    }
+
+    .line {
+      max-width: none;
+    }
+
+    .note {
+      flex-direction: row;
+      gap: 12px;
+    }
   }
 
   .name,
-  .line,
   .ask {
     font-size: 24px;
     line-height: 28px;
     letter-spacing: -0.0195em;
   }
 
-  .opening {
-    padding-bottom: 64px;
-  }
-
-  .about {
-    margin-top: 72px;
+  .line {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 20px;
+    letter-spacing: -0.006em;
   }
 
   .photography {
-    margin-top: 96px;
     scroll-margin-top: 48px;
   }
 
@@ -835,6 +1058,8 @@
 
 .intro {
   --k: -5;
+  /* The name racks in from in front of focus. */
+  --d0: -1;
 }
 
 .text {
@@ -893,6 +1118,44 @@
   .root .portrait,
   .root .write {
     filter: none;
+  }
+
+  /* The secondary spectrum. A fast lens wide open is not colour-neutral off
+     its focus plane: what lies in front of focus fringes magenta, what lies
+     behind it green, and what is in focus stays clean. So with the type
+     here: a plane above the focus line (passed, so nearer than focus) takes
+     a magenta cast as it softens, one below it (still to come, further) a
+     green one, in proportion to its blur, and on the line none at all. Only
+     type: the photographs, the portrait and the form are never tinted.
+     Every var() has a fallback, because one that failed to resolve would
+     void the whole filter, blur and all. */
+  @supports (color: color-mix(in oklab, red calc(min(0.5, 1) * 100%), transparent)) {
+    @media (prefers-contrast: no-preference) and (not (forced-colors: active)) {
+      .root .intro[data-plane],
+      .root .text[data-plane],
+      .root .links[data-plane] {
+        /* Which side of focus: the sign of --d once the space runs, and
+           before that the side each plane starts on (--d0). */
+        --side: clamp(0, var(--d, var(--d0, 1)) * 10000, 1);
+        --fringe: color-mix(
+          in oklab,
+          var(--fringe-far, transparent) calc(var(--side) * 100%),
+          var(--fringe-near, transparent)
+        );
+        /* How far out of focus, for the colour: its depth, and half the
+           rack on load, so the opening is only touched by it. */
+        --defocus: calc((min(var(--ad, 0) * 8, 3.4) + var(--rack) * 2.5) * (1 - var(--sharp)));
+        filter: blur(calc((min(var(--ad, 0) * 8px, 3.4px) + var(--rack) * 5px) * (1 - var(--sharp))))
+          drop-shadow(
+            0 0 calc(var(--defocus) * var(--fringe-spread, 0) * 1px)
+              color-mix(
+                in oklab,
+                var(--fringe) calc(min(var(--defocus) / 3.4 * var(--fringe-max, 0) * var(--fringe-k, 1), 1) * 100%),
+                transparent
+              )
+          );
+      }
+    }
   }
 
   /* Tap to focus: whatever the pointer rests on, or keyboard focus is

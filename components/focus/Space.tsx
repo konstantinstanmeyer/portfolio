@@ -42,6 +42,9 @@ export function Space() {
       const end = Math.max(0, document.documentElement.scrollHeight - height);
       sharpAt = planes.map((el) => {
         const r = el.getBoundingClientRect();
+        // The opening's own planes (data-rest) are sharpest at rest, wherever
+        // the frame sets them: on a phone, centred, below the line.
+        if (el.hasAttribute("data-rest")) return 0;
         return clamp(r.top + window.scrollY + r.height / 2 - FOCUS * height, 0, end);
       });
       delete root.dataset.measuring;
@@ -89,6 +92,13 @@ export function Space() {
 
     // The page changes height when a message grows or an error appears.
     const resized = new ResizeObserver(onResize);
+
+    // In development, ?fringe=2 (or any multiple) scales the colour of
+    // defocus, to judge its strength on a given screen.
+    if (process.env.NODE_ENV !== "production") {
+      const fringe = new URLSearchParams(window.location.search).get("fringe");
+      if (fringe) root.style.setProperty("--fringe-k", fringe);
+    }
 
     measure();
     wake();

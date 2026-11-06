@@ -9,12 +9,13 @@ import { LIMITS, type Field, type Sent, type Values } from "./message";
  * Resend), with the sender's address as the reply-to. Set in the host's env:
  *
  *   RESEND_API_KEY   re_…
- *   CONTACT_FROM     "Konstantin Stanmeyer <site@…>"
+ *   CONTACT_FROM     "Konstantin Stanmeyer <site@…>", on the verified domain
  *   CONTACT_TO       the inbox messages go to
  *
- * The address never appears in the page; it is only shown, as a fallback,
- * to someone whose message failed to send. Without a key, in development,
- * a message is written to the server log instead of sent.
+ * The addresses live only there, never in this code (the repository is
+ * public) or the page; CONTACT_TO is only shown, as a fallback, to someone
+ * whose message failed to send. Without them, in development, a message is
+ * written to the server log instead of sent.
  */
 
 // Faster than this from opening the page to sending, it was not typed.
@@ -99,7 +100,7 @@ export async function sendMessage(_: Sent, data: FormData): Promise<Sent> {
 
   if (limited(sender(await headers()), now)) return { status: "busy", values };
 
-  const to = process.env.CONTACT_TO ?? "";
+  const to = process.env.CONTACT_TO;
   const from = process.env.CONTACT_FROM;
   const key = process.env.RESEND_API_KEY;
   // One line, so a name can never add a header of its own.
@@ -107,12 +108,12 @@ export async function sendMessage(_: Sent, data: FormData): Promise<Sent> {
   const subject = `${name}, from the site`;
   const body = `${name} <${values.email}> wrote, from the site:\n\n${values.message}\n`;
 
-  if (!key || !from) {
+  if (!key || !from || !to) {
     if (process.env.NODE_ENV !== "production") {
-      console.info(`[contact] Not sent (RESEND_API_KEY or CONTACT_FROM unset). To ${to}:\n${subject}\n\n${body}`);
+      console.info(`[contact] Not sent (RESEND_API_KEY, CONTACT_FROM or CONTACT_TO unset):\n${subject}\n\n${body}`);
       return { status: "sent" };
     }
-    console.error("[contact] RESEND_API_KEY or CONTACT_FROM is not set; a message could not be sent.");
+    console.error("[contact] RESEND_API_KEY, CONTACT_FROM or CONTACT_TO is not set; a message could not be sent.");
     return { status: "failed", write: to, values };
   }
 
