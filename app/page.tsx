@@ -124,24 +124,22 @@ export default function Home() {
               <h2 className={s.vh} id="about-heading">
                 About
               </h2>
+              {/* Placeholder until the bio is final; the last one is kept in drafts/bio.md. */}
               <div className={s.text} data-plane="">
                 <p>
-                  The part of this work that matters most happens after it ships, for people who will never know who
-                  built it: someone finding the hours on a slow phone, booking on the first try, reading the menu with
-                  a screen reader, then getting on with their day. The business behind it should be able to afford
-                  that, and to keep it running without calling anyone.
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
+                  et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+                  aliquip ex ea commodo consequat.
                 </p>
                 <p>
-                  Better tools have made that easier to give. The routine parts of programming and design take minutes
-                  now instead of days, leaving the time for what still needs a person: deciding what&rsquo;s worth
-                  building, who it&rsquo;s for, and making sure everyone can use it. Accessibility used to be the first
-                  thing cut when time or money ran short; now there&rsquo;s room for it. At Myrtle Street Media, that
-                  means websites for local businesses that cost less, do more, and work for anyone who visits them.
+                  Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+                  pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit
+                  anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium,
+                  totam rem aperiam.
                 </p>
                 <p>
-                  Before the code came photographs, mostly of strangers, mostly in the second after they forgot about
-                  the camera: good practice, it turns out, for building things meant to be used without a second
-                  thought. Based in Boston.
+                  Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur
+                  magni dolores eos qui ratione voluptatem sequi nesciunt.
                 </p>
               </div>
             </section>
