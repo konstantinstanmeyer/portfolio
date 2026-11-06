@@ -1,0 +1,483 @@
+/*
+ * Boston Light.
+ * The ground is Boston's daylight, right now. A pre-paint script writes
+ * --sun-ground / --sun-ink on :root and data-phase / data-scheme on .root;
+ * without JavaScript the page is plain daylight paper (or dark paper).
+ *
+ * Blocking: four columns, two left edges (column 1 and column 2). In the first
+ * screen, type hangs from the top margin and the portrait and About rest on the
+ * bottom one, so the middle of the screen is nothing but the light.
+ */
+
+/* ---------- the ground ---------- */
+
+/* Fallbacks are plain values per scheme: light-dark() inside var() does not survive the CSS compiler. */
+html:has(.root) {
+  background-color: var(--sun-ground, oklch(98.7% 0.005 235));
+  color-scheme: light dark;
+  scrollbar-gutter: stable;
+}
+
+html:has(.root[data-scheme="light"]) {
+  color-scheme: light;
+}
+
+html:has(.root[data-scheme="dark"]) {
+  color-scheme: dark;
+}
+
+body:has(.root) {
+  background: transparent;
+  color: inherit;
+  overflow-x: clip;
+}
+
+.root {
+  --ground: var(--sun-ground, oklch(98.7% 0.005 235));
+  --ink: var(--sun-ink, oklch(21% 0.006 85));
+  --ink-2: color-mix(in oklab, var(--ink) 58%, var(--ground)); /* ≥ 4.6:1 in every phase */
+  --ink-3: color-mix(in oklab, var(--ink) 30%, var(--ground)); /* decorative only */
+  --tone: color-mix(in oklab, var(--ink) 6%, var(--ground)); /* image placeholder */
+
+  --sans: var(--kl-sans), ui-sans-serif, system-ui, sans-serif;
+  --mono: var(--kl-mono), ui-monospace, monospace;
+  --m: 40px; /* outer margin */
+  --g: 24px; /* column gap */
+  --lh: 22px; /* the page's one line */
+  --gap: 160px; /* between photographs */
+  --pw: 220px; /* portrait width */
+  --ph: calc(var(--pw) * 1280 / 839); /* portrait height, at its own 839 × 1280 */
+
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: var(--lh);
+  font-weight: 400;
+  letter-spacing: -0.006em;
+  font-kerning: normal;
+  font-synthesis: none;
+  font-optical-sizing: auto;
+  font-variant-numeric: proportional-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:has(.root) {
+    background-color: var(--sun-ground, oklch(17% 0.004 85));
+  }
+
+  .root {
+    --ground: var(--sun-ground, oklch(17% 0.004 85));
+    --ink: var(--sun-ink, oklch(92% 0.004 85));
+  }
+}
+
+.root ::selection {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.root :where(h1, h2, p, ol) {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+}
+
+/* ---------- links and focus ---------- */
+
+.root a {
+  color: inherit;
+  text-decoration: underline 1px var(--ink-3);
+  text-underline-offset: 0.22em;
+  text-decoration-skip-ink: auto;
+  transition: text-decoration-color 0.18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .root a:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.root a:active {
+  opacity: 0.7;
+}
+
+.root :focus-visible {
+  outline: 1.5px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+.skip {
+  position: absolute;
+  left: calc(var(--m) - 6px);
+  top: 4px;
+  z-index: 1;
+  padding: 3px 6px;
+  line-height: 18px;
+  background: var(--ground);
+  translate: 0 -200%;
+}
+
+.skip:focus-visible {
+  translate: none;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- grid ---------- */
+
+.page {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--g);
+  max-width: 1680px;
+  margin-inline: auto;
+  padding: var(--m);
+}
+
+.head,
+.main,
+.about,
+.photography,
+.photos,
+.photo,
+.foot {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: start;
+}
+
+/* ---------- head: hangs from the top margin ---------- */
+
+.head {
+  /* Fill the first screen down to the portrait, which rests on the bottom margin. */
+  min-height: max(96px, calc(100svh - 2 * var(--m) - var(--ph)));
+  align-content: start;
+}
+
+.name {
+  grid-column: 1;
+  font-weight: 500;
+  text-box: trim-both cap alphabetic;
+}
+
+/* The page's one statement: his line, completed by Boston's light. */
+.line {
+  grid-column: 2 / -1;
+  max-width: 34em;
+  font-size: 30px;
+  line-height: 33px;
+  letter-spacing: -0.021em;
+  text-wrap: balance;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Light type on a dark ground reads heavier; take a little weight off. */
+.root[data-scheme="dark"] .line {
+  font-weight: 360;
+}
+
+@media (prefers-color-scheme: dark) {
+  .root:not([data-scheme]) .line {
+    font-weight: 360;
+  }
+}
+
+.line time {
+  white-space: nowrap;
+}
+
+/* The given line, then the live one: Boston's light always starts its own line. */
+.now {
+  display: block;
+  text-wrap: balance;
+}
+
+/*
+ * Before hydration the pre-paint script has already written the words into
+ * --sun-now / --sun-next; show them in CSS so the first paint is complete.
+ * Without JavaScript nothing is written and the full stop stays.
+ */
+.root[data-phase] .stop {
+  display: none;
+}
+
+.root[data-phase] .pending::before {
+  content: ",";
+}
+
+.root[data-phase] .pending::after {
+  content: var(--sun-now, "");
+  display: block;
+  text-wrap: balance;
+}
+
+.root[data-phase] .pendingNext::after {
+  content: var(--sun-next, "");
+}
+
+/* The time is the one control: press it to play the next 24 hours of light. */
+.play {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  text-decoration: underline 1px var(--ink-3);
+  text-underline-offset: 0.2em;
+  text-decoration-skip-ink: auto;
+  transition: text-decoration-color 0.18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .play:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.play[aria-pressed="true"] {
+  text-decoration-color: currentColor;
+}
+
+.play:active {
+  opacity: 0.7;
+}
+
+/* ---------- about: rests on the bottom margin ---------- */
+
+.about {
+  align-items: end;
+}
+
+.portrait {
+  grid-column: 1;
+  width: var(--pw);
+}
+
+.portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--tone);
+}
+
+/* Last baseline on the portrait's bottom edge. */
+.bio {
+  grid-column: 2 / span 2;
+  max-width: 60ch;
+  text-wrap: pretty;
+  text-box: trim-end cap alphabetic;
+}
+
+/* ---------- photographs: one per row, on whatever light Boston has ---------- */
+
+.photography {
+  margin-top: var(--gap);
+  scroll-margin-top: var(--m);
+}
+
+.photos {
+  row-gap: var(--gap);
+  list-style: none;
+}
+
+/* Index cap-height on the photograph's top edge. */
+.index {
+  grid-column: 1;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 14px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  text-box: trim-both cap alphabetic;
+}
+
+.photo img {
+  grid-column: 2 / -1;
+  display: block;
+  /* Never cropped: the full span, unless that would be taller than the screen allows. */
+  width: min(100%, calc((100svh - 2 * var(--m)) * var(--r)));
+  height: auto;
+  background: var(--tone);
+}
+
+/* ---------- foot ---------- */
+
+.foot {
+  margin-top: var(--gap);
+}
+
+.place {
+  grid-column: 1;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 14px;
+  letter-spacing: 0;
+  color: var(--ink-2);
+  text-box: trim-both cap alphabetic;
+}
+
+.signoff {
+  grid-column: 2 / -1;
+  min-height: 11px;
+  text-box: trim-both cap alphabetic;
+}
+
+/* ---------- laptop: the live line still fits one line ---------- */
+
+@media (max-width: 1365px) {
+  .line {
+    font-size: 28px;
+    line-height: 31px;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ---------- tablet ---------- */
+
+@media (max-width: 1023px) {
+  .root {
+    --m: 32px;
+    --g: 16px;
+    --gap: 128px;
+    --pw: min(220px, calc((100vw - 2 * var(--m) - 3 * var(--g)) / 4));
+  }
+
+  .line {
+    font-size: 26px;
+    line-height: 29px;
+    letter-spacing: -0.019em;
+  }
+
+  .bio {
+    grid-column: 2 / -1;
+  }
+}
+
+/* ---------- phone ---------- */
+
+@media (max-width: 767px) {
+  .root {
+    --m: 20px;
+    --gap: 64px;
+    --pw: 168px;
+  }
+
+  .page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Same blocking as desktop: the About's last line rests on the bottom margin of the first screen.
+     The floor reserves the statement's five lines, so nothing moves when the live line arrives. */
+  .head {
+    min-height: max(
+      calc(var(--lh) + 16px + 5 * 26px + 64px),
+      calc(100svh - 2 * var(--m) - var(--ph) - 32px - 9 * var(--lh))
+    );
+  }
+
+  .name,
+  .line,
+  .portrait,
+  .bio,
+  .index,
+  .photo img,
+  .place,
+  .signoff {
+    grid-column: 1;
+  }
+
+  .line {
+    margin-top: 16px;
+    font-size: 22px;
+    line-height: 26px;
+    letter-spacing: -0.016em;
+  }
+
+  .bio {
+    margin-top: 32px;
+    text-box: none;
+  }
+
+  .photography {
+    margin-top: 96px;
+  }
+
+  .photo {
+    row-gap: 12px;
+  }
+
+  .photo img {
+    width: 100%;
+  }
+
+  .foot {
+    margin-top: 96px;
+  }
+
+  .signoff {
+    margin-top: 12px;
+  }
+}
+
+/* ---------- motion: nothing on load; the ground drifts, and the reader can play the day ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The ground drifts with the sun, one minute at a time. */
+  html:has(.root[data-live]) {
+    transition: background-color 60s linear;
+  }
+
+  /* A phase change (the ink flips at -4°) crossfades; it is never scrubbed. */
+  html:has(.root[data-flip]),
+  .root[data-flip],
+  .root[data-flip] * {
+    transition:
+      background-color 0.6s ease,
+      color 0.6s ease,
+      text-decoration-color 0.6s ease !important;
+  }
+
+  /* While the day plays, the ground follows frame by frame; only the ink's flip crossfades. */
+  html:has(.root[data-lapse]) {
+    transition: none !important;
+  }
+
+  .root[data-lapse],
+  .root[data-lapse] * {
+    transition:
+      color 0.6s ease,
+      text-decoration-color 0.6s ease !important;
+  }
+}
+
+/* ---------- preferences ---------- */
+
+@media (prefers-contrast: more) {
+  .root {
+    --ink-2: color-mix(in oklab, var(--ink) 75%, var(--ground));
+    --ink-3: color-mix(in oklab, var(--ink) 50%, var(--ground));
+  }
+}
+
+@media (forced-colors: active) {
+  .root :focus-visible {
+    outline-color: CanvasText;
+  }
+}

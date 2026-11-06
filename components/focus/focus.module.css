@@ -1,0 +1,1178 @@
+/* Concept 2: Coincidence.
+   A rangefinder focuses by sliding a second image of the subject sideways
+   until it lies on the first. Here short lines of type arrive doubled and
+   their faint copy slides into coincidence. Only the copy moves; the glyphs
+   never do. Everything else on the page is plain. */
+
+/* ---------- ground ---------- */
+
+/* Tokens are written out per scheme: ink-2 is the lightest grey any word is
+   set in (5.3:1 on the paper, and still 4.5:1 or more on the ground's
+   strongest light), ink-3 is ink 30% of the way into paper (decoration
+   only), tone is 6% (the image placeholder). The ghost is ink at 28%, 32% on
+   dark, and nothing else: a real finder's patch is often amber, but colour
+   here would read as an RGB split. The page's one colour lives in defocus
+   instead (the secondary spectrum, in "the space"): symmetric, on soft type
+   only, never on a ghost alone. */
+:global(html):has(.root) {
+  color-scheme: light dark;
+  --paper: oklch(98.4% 0.003 85); /* #fbfaf7 */
+  --ink: oklch(21% 0.006 85); /* #1a1815, 16.9:1 */
+  --ink-2: oklch(52% 0.0047 85); /* #6a6966, 5.3:1 */
+  --ink-3: oklch(75.2% 0.0039 85); /* #afaeac */
+  --tone: oklch(93.8% 0.0032 85); /* #ebeae8 */
+  --ghost: oklch(21% 0.006 85 / 0.28);
+  /* The secondary spectrum: magenta in front of focus, green behind. The
+     spread is the fringe's radius per pixel of blur; max, its opacity at
+     full blur. */
+  --fringe-near: oklch(55% 0.19 335);
+  --fringe-far: oklch(58% 0.13 172);
+  --fringe-spread: 0.45;
+  --fringe-max: 0.9;
+  background: var(--paper);
+  color: var(--ink);
+  scrollbar-gutter: stable;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html):has(.root) {
+    --paper: oklch(17% 0.004 85); /* #100f0d */
+    --ink: oklch(92% 0.004 85); /* #e6e4e2, 15.1:1 */
+    --ink-2: oklch(62.5% 0.004 85); /* #898785, 5.4:1 */
+    --ink-3: oklch(39.5% 0.004 85); /* #474644 */
+    --tone: oklch(21.5% 0.004 85); /* #1a1917 */
+    --ghost: oklch(92% 0.004 85 / 0.32);
+    /* Light ink on dark paper shows the fringe as a rim, so it is kept
+       narrower and paler here, short of a glow. */
+    --fringe-near: oklch(70% 0.15 340);
+    --fringe-far: oklch(78% 0.09 178);
+    --fringe-spread: 0.55;
+    --fringe-max: 0.95;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :global(html):has(.root) {
+    --ink-2: color-mix(in oklch, var(--ink) 75%, var(--paper));
+    --ink-3: color-mix(in oklch, var(--ink) 45%, var(--paper));
+  }
+}
+
+:global(body):has(.root) {
+  background: var(--paper);
+  color: var(--ink);
+  overflow-x: clip;
+}
+
+:global(html):has(.root) ::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---------- type ---------- */
+
+.root {
+  --m: clamp(24px, 6.667vw, 96px);
+  --g: 24px;
+  --ease-morph: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* A hand on a focus ring: a beat of stillness, a deliberate turn, and a
+     landing that does not dawdle in the last pixel, where doubled type only
+     reads as bold. */
+  --ease-focus: linear(0, 0.03 8%, 0.15 20%, 0.44 36%, 0.74 52%, 0.91 66%, 0.98 80%, 1 92%, 1);
+
+  font-family: var(--f-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 21px;
+  letter-spacing: -0.006em;
+  font-weight: 400;
+  font-kerning: normal;
+  font-synthesis: none;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.name,
+.ask {
+  font-size: 32px;
+  line-height: 36px;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+
+.name {
+  font-weight: 500;
+}
+
+/* The line under the name: smaller, and set heavier, so it holds its own
+   beside the name at a little over half its size. */
+.line {
+  margin-top: 10px;
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: -0.012em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.count,
+.controls {
+  font-family: var(--f-mono), ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+/* ---------- the light ---------- */
+
+/* The photographs' light, out of focus (Spill.tsx): one fixed canvas under
+   everything on the page and over the paper itself. Its coarse bitmap is
+   scaled up smoothly, which is all a light this soft needs. */
+.root {
+  isolation: isolate;
+}
+
+.spill {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Only where the colour of soft type shows too, and hidden the moment any
+   of these changes mid-visit. */
+@media (prefers-reduced-motion: no-preference) and (prefers-contrast: no-preference) and (not (forced-colors: active)) {
+  .spill {
+    display: block;
+  }
+}
+
+/* The ground (Ground.tsx): two great hairline circles far behind the page,
+   their second images racking into coincidence. Under the photographs'
+   light and over the paper; drawn out from nothing on load, so it needs no
+   fade of its own. */
+.ground {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@media (prefers-contrast: no-preference) and (not (forced-colors: active)) {
+  .ground {
+    display: block;
+  }
+}
+
+/* ---------- grid ---------- */
+
+.frame {
+  container-type: inline-size;
+}
+
+.grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--g);
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: var(--m);
+}
+
+/* ---------- the opening frame ---------- */
+
+/* The header on the focus line, then the About, then the photographs, one
+   even interval apart (--interval): above the About, its margin; below it,
+   this padding and the photographs' margin. */
+.root {
+  --interval: 192px;
+}
+
+.opening {
+  padding-bottom: calc(var(--interval) / 2);
+}
+
+/* ---------- header: portrait, name, line ---------- */
+
+.hero {
+  /* The portrait's bottom edge, and the name's last baseline, sit on the
+     focus line at 42% of the frame, unless that would push the portrait
+     into the top margin. */
+  --col: calc((min(100cqw, 1600px) - 2 * var(--m) - 11 * var(--g)) / 12);
+  --ph: calc((2 * var(--col) + var(--g)) * var(--portrait));
+  padding-top: max(96px, calc(42svh - var(--ph)));
+}
+
+.portrait {
+  grid-column: 2 / span 2;
+  align-self: start;
+  background: var(--tone);
+}
+
+.portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.intro {
+  position: relative;
+  grid-column: 5 / -1;
+  align-self: end;
+}
+
+/* A caption under the line. It hangs below the focus line, so the name and
+   line keep their place on it, and opens with the contact sheet in
+   miniature: twenty cells of colour, edge to edge, 3:2 like the frames. */
+.note {
+  position: absolute;
+  top: calc(100% + 16px);
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.index {
+  display: grid;
+  grid-template-columns: repeat(5, 6px);
+  grid-auto-rows: 4px;
+  flex: none;
+}
+
+/* On load the cells arrive one by one, in no order, as the sheet's
+   photographs resolve: from just after the page opens, ahead of the
+   figures in the ground. --at, each cell's moment, is set in the page. */
+@media (prefers-reduced-motion: no-preference) {
+  .index i {
+    animation: cell 1ms steps(1) backwards;
+    animation-delay: var(--at);
+  }
+}
+
+@keyframes cell {
+  from {
+    opacity: 0;
+  }
+}
+
+.name,
+.line {
+  position: relative;
+  width: fit-content;
+}
+
+.name {
+  text-box: trim-start cap alphabetic;
+}
+
+.line {
+  text-box: trim-end cap alphabetic;
+}
+
+/* ---------- about ---------- */
+
+.about {
+  margin-top: var(--interval);
+  align-items: baseline;
+}
+
+.text {
+  grid-column: 5 / span 5;
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
+/* A blank line between paragraphs. */
+.text p + p {
+  margin-top: 21px;
+}
+
+.footer a {
+  position: relative;
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--ink-3);
+  text-underline-offset: 0.22em;
+  text-decoration-skip-ink: auto;
+  transition: text-decoration-color 0.18s ease;
+}
+
+/* ---------- photography ---------- */
+
+.photography {
+  margin-top: calc(var(--interval) / 2);
+  scroll-margin-top: 96px;
+}
+
+/* Twenty frames, five by four, with nothing between them: the pixels of
+   one picture. Each is cropped to 3:2 here and shown whole when opened. */
+.sheet {
+  grid-row: 1;
+  grid-column: 5 / span 7;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: var(--tone);
+}
+
+.open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: zoom-in;
+}
+
+/* A hair over the tile's edge, so fractional widths never open a seam. */
+.tile img,
+.pixels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% + 0.5px);
+  height: calc(100% + 0.5px);
+}
+
+.tile img {
+  object-fit: cover;
+}
+
+.pixels {
+  pointer-events: none;
+}
+
+/* Waiting to be revealed: nothing on the sheet but the paper. A tile shows
+   its canvas while it resolves, then its photograph. */
+.sheet[data-reveal="armed"] .tile:not([data-state]) {
+  background: transparent;
+}
+
+.sheet[data-reveal="armed"] .tile:not([data-state="shown"]) img {
+  opacity: 0;
+}
+
+/* Under the pointer, or the keyboard, the one photograph dims a little: this
+   frame, on its own, opens. Laid over the canvas too, so a tile still
+   resolving answers the same way. */
+.open::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: oklch(0% 0 0 / 0.24);
+  opacity: 0;
+  transition: opacity 160ms var(--ease-morph);
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .open:hover::before {
+    opacity: 1;
+  }
+}
+
+.open:focus-visible::before {
+  opacity: 1;
+}
+
+/* The page's own ring is replaced by the one drawn on the photograph; this
+   transparent one only shows where the system forces colours. */
+.root .open:focus-visible {
+  outline: 1.5px solid transparent;
+  outline-offset: -1.5px;
+}
+
+/* The keyboard's ring sits on the photograph: ink, with a paper edge inside. */
+.open:focus-visible::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    inset 0 0 0 3px var(--paper);
+}
+
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- a frame, opened ---------- */
+
+:global(html):has(.dialog[open]) {
+  overflow: hidden;
+}
+
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: var(--m);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.dialog[open] {
+  display: grid;
+  place-items: center;
+}
+
+/* Focused on the photograph, the page behind falls out of focus. */
+.dialog::backdrop {
+  background: color-mix(in oklch, var(--paper) 78%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.figure {
+  margin: 0;
+}
+
+.loupe {
+  position: relative;
+  width: fit-content;
+}
+
+.loupe img {
+  display: block;
+  width: min(1280px, 100vw - 2 * var(--m), (100svh - 2 * var(--m) - 40px) * var(--ratio));
+  height: auto;
+}
+
+.loupe .pixels {
+  width: 100%;
+  height: 100%;
+}
+
+.loupe[data-state="pixel"] img {
+  opacity: 0;
+}
+
+.caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 14px;
+}
+
+/* Full ink: the ground behind the caption is the blurred page, not paper. */
+.caption .count,
+.caption .controls {
+  color: var(--ink);
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+.controls {
+  display: flex;
+  gap: 20px;
+}
+
+.controls button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.controls button:focus-visible {
+  outline: 1.5px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .controls button:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.25em;
+  }
+}
+
+/* ---------- write ---------- */
+
+.write {
+  margin-top: 192px;
+}
+
+.ask {
+  grid-column: 5 / -1;
+}
+
+/* The second thought, said a little more quietly. */
+.aside {
+  opacity: 0.6;
+}
+
+/* As wide as the photographs, so its rules end where the sheet does. */
+.letter {
+  grid-column: 5 / span 7;
+  margin-top: 48px;
+}
+
+/* Ruled like the margin of a contact sheet: a row to each field between
+   hairlines, its name in a column one frame wide, and beside it a soft
+   panel (--well) where it is written, with a hint of what goes there, so
+   where to write is plain at a glance. The rules are the lightest grey any
+   word is set in (4.5:1 or more); under the pointer, or written in, the
+   panel deepens and its rule turns to ink. */
+.form {
+  --label: max(20%, 6em);
+  --well: var(--tone);
+  --well-on: color-mix(in oklch, var(--ink) 10%, var(--paper));
+  border-top: 1px solid var(--ink-2);
+}
+
+.field,
+.send {
+  display: grid;
+  grid-template-columns: var(--label) minmax(0, 1fr);
+  align-items: start;
+}
+
+.field {
+  position: relative;
+  border-bottom: 1px solid var(--ink-2);
+  cursor: text;
+  transition:
+    border-color 160ms var(--ease-morph),
+    box-shadow 160ms var(--ease-morph);
+}
+
+.field label {
+  padding: 14px 16px 14px 0;
+  cursor: text;
+}
+
+/* The whole row answers a click, not only the words in it. */
+.field label::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.field input,
+.field textarea {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--well);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: inherit;
+  transition: background-color 160ms var(--ease-morph);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ink-2);
+  opacity: 1;
+}
+
+/* Grows with what is written, from five lines to most of a frame. */
+.field textarea {
+  min-height: calc(5 * 21px + 28px);
+  max-height: 60svh;
+  field-sizing: content;
+  resize: none;
+}
+
+@supports not (field-sizing: content) {
+  .field textarea {
+    resize: vertical;
+  }
+}
+
+/* A phone zooms in on type smaller than this. */
+@media (pointer: coarse) {
+  .field input,
+  .field textarea {
+    font-size: 16px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .field:hover {
+    border-bottom-color: var(--ink);
+  }
+
+  .field:hover input,
+  .field:hover textarea {
+    background: var(--well-on);
+  }
+}
+
+.field input:focus,
+.field textarea:focus {
+  background: var(--well-on);
+}
+
+.field:focus-within,
+.field:has([aria-invalid="true"]) {
+  border-bottom-color: var(--ink);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+/* The row's rule is the ring; this transparent one only shows where the
+   system forces colours. */
+.field input:focus,
+.field textarea:focus {
+  outline: 1px solid transparent;
+}
+
+/* The browser's autofill colours, held off. */
+.field input:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  transition: background-color 600000s 0s;
+}
+
+.error {
+  grid-column: 2;
+  padding: 8px 16px 14px;
+}
+
+/* Sending is the last word in the column of names; what came of it, beside it. */
+.send {
+  padding-top: 4px;
+}
+
+.send button {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--ink-3);
+  text-underline-offset: 0.22em;
+  cursor: pointer;
+  transition: text-decoration-color 0.18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .send button:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.send button:active {
+  opacity: 0.7;
+}
+
+.send button:focus-visible {
+  outline: 1.5px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.send button[aria-disabled="true"] {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.status {
+  padding-block: 11.5px;
+}
+
+.status:focus {
+  outline: none;
+}
+
+/* Out of sight and out of reach, for bots alone. */
+.trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- footer ---------- */
+
+.footer {
+  margin-top: 144px;
+  padding-bottom: 120px;
+}
+
+/* Edge to edge with the photographs: elsewhere on the left, the way back up on the right. */
+.links,
+.elsewhere {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.links {
+  grid-column: 5 / span 7;
+  justify-content: space-between;
+}
+
+/* ---------- links, focus, skip ---------- */
+
+@media (hover: hover) and (pointer: fine) {
+  .footer a:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.root a:active {
+  opacity: 0.7;
+}
+
+/* A 44px target without moving the text. */
+.footer a::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+
+.root a:focus-visible {
+  outline: 1.5px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.skip {
+  position: fixed;
+  top: 40px;
+  left: var(--m);
+  z-index: 4;
+  padding: 6px 10px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.skip:not(:focus-visible) {
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0;
+}
+
+/* ---------- coincidence ---------- */
+
+@keyframes coincide {
+  from {
+    text-shadow: 0.4em 0 0 var(--ghost);
+  }
+  to {
+    text-shadow: 0 0 0 var(--ghost);
+  }
+}
+
+/* On load the opening frame racks into focus (--rack, 1 to 0, adds blur to
+   whatever depth a plane is at): the name, then the words below, a beat
+   apart. The portrait is never softened. */
+@property --rack {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@keyframes rack-in {
+  from {
+    --rack: 1;
+  }
+  to {
+    --rack: 0;
+  }
+}
+
+/* And the second image arrives enlarged, soft and to one side, and shrinks
+   onto its subject. It sits behind, as a shadow would, and once it lands
+   it is gone. */
+@keyframes echo {
+  from {
+    translate: 0.35em 0;
+    scale: 1.16;
+    filter: blur(2px);
+    opacity: 1;
+  }
+  to {
+    translate: 0 0;
+    scale: 1;
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .opening [data-plane] {
+    animation: rack-in 650ms var(--ease-morph) backwards;
+  }
+
+  .opening .portrait {
+    animation: none;
+  }
+
+  .opening .intro {
+    animation-delay: 60ms;
+  }
+
+  .opening .text {
+    animation-delay: 120ms;
+  }
+
+  /* The text's echo is the text again, kept out of the accessible name. */
+  .name::after,
+  .line::after {
+    content: attr(data-text) / "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    color: var(--ghost);
+    text-box: inherit;
+    pointer-events: none;
+    opacity: 0;
+    animation: echo 1100ms var(--ease-focus) 250ms backwards;
+  }
+
+  .line::after {
+    animation-delay: 340ms;
+  }
+
+
+  /* Out of view at load: doubled, waiting. */
+  .root [data-focus="armed"] {
+    text-shadow: 0.4em 0 0 var(--ghost);
+  }
+
+  /* Entered the frame: slides into coincidence, once. */
+  .root [data-focus="in"] {
+    animation: coincide 900ms var(--ease-focus) backwards;
+  }
+}
+
+/* ---------- phone and tablet ---------- */
+
+@media (max-width: 959.98px) {
+  .root {
+    --m: clamp(24px, 6.25vw, 64px);
+    --interval: 160px;
+  }
+
+  .grid {
+    display: block;
+  }
+
+  /* The opening, centred: the portrait, and the name and line under it,
+     the portrait as far from the top of the frame as from either side, up
+     to a sixth of the frame's height, so a tablet's wider margins never
+     push it down the page. */
+  .hero {
+    --photo: clamp(144px, 42vw, 216px);
+    padding-top: max(72px, min(calc((100cqw - var(--photo)) / 2), 16svh));
+    text-align: center;
+  }
+
+  .portrait {
+    width: var(--photo);
+    margin-inline: auto;
+  }
+
+  .intro {
+    margin-top: 32px;
+  }
+
+  /* Centred under the line: the miniature over its caption. */
+  .note {
+    position: static;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+    white-space: normal;
+  }
+
+  .name,
+  .line {
+    margin-inline: auto;
+  }
+
+  /* The line in two, under the name, so the opening stays one narrow
+     column: the figures either side of it can come in close. */
+  .line {
+    max-width: 17em;
+  }
+
+  /* A phone on its side: the portrait beside the name, as on a desktop, the
+     pair centred across the frame and down it. */
+  @media (min-aspect-ratio: 4 / 3) {
+    .hero {
+      --photo: min(216px, calc(56svh / var(--portrait)));
+      padding-top: max(72px, calc((100svh - var(--photo) * var(--portrait)) / 2));
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 48px;
+      text-align: start;
+    }
+
+    .portrait {
+      flex: none;
+      margin-inline: 0;
+    }
+
+    .intro {
+      margin-top: 0;
+    }
+
+    .name,
+    .line {
+      margin-inline: 0;
+    }
+
+    .line {
+      max-width: none;
+    }
+
+    .note {
+      flex-direction: row;
+      gap: 12px;
+    }
+  }
+
+  .name,
+  .ask {
+    font-size: 24px;
+    line-height: 28px;
+    letter-spacing: -0.0195em;
+  }
+
+  .line {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 20px;
+    letter-spacing: -0.006em;
+  }
+
+  .photography {
+    scroll-margin-top: 48px;
+  }
+
+  /* Out past most of the margin, so each frame is as large as a phone allows. */
+  .sheet {
+    margin-inline: calc(var(--m) * -0.58);
+  }
+
+  .write {
+    margin-top: 120px;
+  }
+
+  .letter {
+    margin-top: 32px;
+  }
+
+  .footer {
+    margin-top: 96px;
+    padding-bottom: 72px;
+  }
+}
+
+/* ---------- parallax ---------- */
+
+@property --ax {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --ay {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Angular parallax: each plane of the page moves against the viewing angle
+   by its own depth (--k, px at the frame's edge), the photographs, furthest
+   away, the other way. */
+@media (prefers-reduced-motion: no-preference) {
+  .root {
+    transition:
+      --ax 900ms var(--ease-morph),
+      --ay 900ms var(--ease-morph);
+  }
+}
+
+/* ---------- the space ---------- */
+
+/* Every plane sits at a depth set by its distance from the focus line (Space.tsx
+   writes --d, signed, and --ad in frame heights, zero within the sharp band).
+   Away from the line, above or below, a plane recedes, tilts away as if on
+   the curve of a drum, drifts apart from its neighbours and softens. The
+   scroll's speed (--v) tips the whole space a little while it moves. */
+.root {
+  --amp: 1;
+}
+
+.portrait {
+  --k: -9;
+}
+
+.intro {
+  --k: -5;
+  /* The name racks in from in front of focus. */
+  --d0: -1;
+}
+
+.text {
+  --k: -3.5;
+}
+
+.write {
+  --k: -3;
+}
+
+.links {
+  --k: -2;
+}
+
+.sheet {
+  --k: 7;
+}
+
+/* How far a plane is pulled sharp by the pointer or keyboard, 0 to 1.
+   Transitioned on its own, so neither the scroll's depth (already eased by
+   Space.tsx) nor the rack on load is ever held up by a transition. */
+@property --sharp {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/* All of it only while motion is welcome: switching reduced motion on mid-
+   visit stills the page at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .root[data-space] [data-plane] {
+    transform:
+      perspective(1100px)
+      translate3d(0, calc(var(--d, 0) * 48px * var(--amp)), calc(var(--ad, 0) * -320px * var(--amp)))
+      rotateX(calc((var(--d, 0) * -24deg + var(--v, 0) * 6deg) * var(--amp)))
+      rotateY(calc(var(--ax, 0) * 3deg));
+    translate: calc(var(--ax, 0) * var(--k, -2) * 1px) calc(var(--ay, 0) * var(--k, -2) * 0.6px);
+  }
+
+  /* Measured flat, so a plane's tilt never moves where it is measured to be. */
+  .root[data-measuring] [data-plane] {
+    transform: none;
+    translate: none;
+  }
+
+  /* Softness: the plane's depth, plus the rack on load, less any pull.
+     Not waiting on the script, so the opening frame is already out of focus
+     at first paint. */
+  .root [data-plane] {
+    filter: blur(calc((min(var(--ad, 0) * 8px, 3.4px) + var(--rack) * 5px) * (1 - var(--sharp))));
+    transition: --sharp 260ms var(--ease-morph);
+  }
+
+  /* The portrait, and the form, move through the space with everything
+     else but are never softened: a face, and fields you need to find. */
+  .root .portrait,
+  .root .write {
+    filter: none;
+  }
+
+  /* The secondary spectrum. A fast lens wide open is not colour-neutral off
+     its focus plane: what lies in front of focus fringes magenta, what lies
+     behind it green, and what is in focus stays clean. So with the type
+     here: a plane above the focus line (passed, so nearer than focus) takes
+     a magenta cast as it softens, one below it (still to come, further) a
+     green one, in proportion to its blur, and on the line none at all. Only
+     type: the photographs, the portrait and the form are never tinted.
+     Every var() has a fallback, because one that failed to resolve would
+     void the whole filter, blur and all. */
+  @supports (color: color-mix(in oklab, red calc(min(0.5, 1) * 100%), transparent)) {
+    @media (prefers-contrast: no-preference) and (not (forced-colors: active)) {
+      .root .intro[data-plane],
+      .root .text[data-plane],
+      .root .links[data-plane] {
+        /* Which side of focus: the sign of --d once the space runs, and
+           before that the side each plane starts on (--d0). */
+        --side: clamp(0, var(--d, var(--d0, 1)) * 10000, 1);
+        --fringe: color-mix(
+          in oklab,
+          var(--fringe-far, transparent) calc(var(--side) * 100%),
+          var(--fringe-near, transparent)
+        );
+        /* How far out of focus, for the colour: its depth, and half the
+           rack on load, so the opening is only touched by it. */
+        --defocus: calc((min(var(--ad, 0) * 8, 3.4) + var(--rack) * 2.5) * (1 - var(--sharp)));
+        filter: blur(calc((min(var(--ad, 0) * 8px, 3.4px) + var(--rack) * 5px) * (1 - var(--sharp))))
+          drop-shadow(
+            0 0 calc(var(--defocus) * var(--fringe-spread, 0) * 1px)
+              color-mix(
+                in oklab,
+                var(--fringe) calc(min(var(--defocus) / 3.4 * var(--fringe-max, 0) * var(--fringe-k, 1), 1) * 100%),
+                transparent
+              )
+          );
+      }
+    }
+  }
+
+  /* Tap to focus: whatever the pointer rests on, or keyboard focus is
+     inside, is pulled sharp, wherever it is in the space. */
+  .root [data-plane]:focus-within {
+    --sharp: 1;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .root [data-plane]:hover {
+      --sharp: 1;
+    }
+  }
+}
+
+@media (max-width: 959.98px) {
+  .root {
+    --amp: 0.7;
+  }
+}
